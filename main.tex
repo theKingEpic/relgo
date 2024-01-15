@@ -1,0 +1,117 @@
+% VLDB template version of 2020-08-03 enhances the ACM template, version 1.7.0:
+% https://www.acm.org/publications/proceedings-template
+% The ACM Latex guide provides further information about the ACM template
+
+\documentclass[sigconf, nonacm]{acmart}
+
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{multicol}
+\usepackage{multirow}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{example}{Example}
+%% The following content must be adapted for the final version
+% paper-specific
+\newcommand\vldbdoi{XX.XX/XXX.XX}
+\newcommand\vldbpages{XXX-XXX}
+% issue-specific
+\newcommand\vldbvolume{14}
+\newcommand\vldbissue{1}
+\newcommand\vldbyear{2020}
+% should be fine as it is
+\newcommand\vldbauthors{\authors}
+\newcommand\vldbtitle{\shorttitle} 
+% leave empty if no availability url should be set
+\newcommand\vldbavailabilityurl{URL_TO_YOUR_ARTIFACTS}
+% whether page numbers should be shown or not, use 'plain' for review versions, 'empty' for camera ready
+\newcommand\vldbpagestyle{plain} 
+
+\begin{document}
+\title{Converged Optimizer for Efficient Join Order Optimization}
+
+%%
+%% The "author" command and its associated commands are used to define the authors and their affiliations.
+%\author{Ben Trovato}
+%\affiliation{%
+%  \institution{Institute for Clarity in Documentation}
+%  \streetaddress{P.O. Box 1212}
+%  \city{Dublin}
+%  \state{Ireland}
+%  \postcode{43017-6221}
+%}
+%\email{trovato@corporation.com}
+
+
+%%
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+\begin{abstract}
+
+\end{abstract}
+
+\maketitle
+
+\section{Motivation}
+
+SQL/Property Graph Queries is Part 16 of SQL 2023
+Graphs are presented as views, and the vertices and edges in the graphs are represented as tables
+For queries, the graph queries and relational queries can be expressed in one statement.
+
+\begin{example}
+An example about how to write the sql/pgq query.
+\end{example}
+
+Query optimization is crucial for query processing.
+The optimizer can significantly influence the efficiency of query processing.
+There are already many works about relational query optimizers, and some works about graph query optimizers.
+However, neither of them are suitable for SQL/PGQ queries.
+Because they can only optimize the queries from the relational perspective or the graph perspective, but not both.
+In this paper, we are going to propose a new converged framework for query optimization of SQL/PGQ statements.
+
+There are mainly x challenges.
+
+\textbf{Challenge 1. Relational optimizers cannot be used to optimize graph queries directly (or with limited efficiency)}.
+It is true that the vertices and edges in graphs can be represented as corresponding tables in relational databases, and the paths in the graphs can be translated into join operators in relational algebra.
+However, since the relational optimizers only take the relational operators into consideration, some efficient graph operators (e.g., get edge, get vertex, get neighbors with graph indices) are ignored in the process of optimization.
+Therefore, the search space is artificially reduced, the best physical plan are likely to be missed.
+An intuitive idea is to replace some relational operators with graph operators after the physical plans are obtained (e.g., replace some join operators with getV/getE/getNeighbor in graph operators) to take advantage of the benefits brought about by graph operators.
+
+\begin{example}
+    An example about 
+\end{example}
+
+However, relational queries cannot always be expressed as graph queries.
+The first reason is that 
+
+
+\section{Data Model}
+
+
+\section{Graph Relational Algebra (or another name)}
+
+
+\section{Converged Graph Relational Optimizer}
+
+
+\section{Evaluation}
+
+
+\section{Related Work}
+
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+
+%\begin{acks}
+% This work was supported by the [...] Research Fund of [...] (Number [...]). Additional funding was provided by [...] and [...]. We also thank [...] for contributing [...].
+%\end{acks}
+
+%\clearpage
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{sample}
+
+\end{document}
+\endinput
