@@ -4,7 +4,19 @@
 
 \documentclass[sigconf, nonacm]{acmart}
 
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage{xspace}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{stmaryrd}
 \usepackage{graphicx}
+\usepackage{float}
+\usepackage{pifont}
+\usepackage{listings}
 \usepackage{subcaption}
 \usepackage{multicol}
 \usepackage{multirow}
@@ -26,6 +38,55 @@
 \newcommand\vldbavailabilityurl{URL_TO_YOUR_ARTIFACTS}
 % whether page numbers should be shown or not, use 'plain' for review versions, 'empty' for camera ready
 \newcommand\vldbpagestyle{plain} 
+
+
+\newcommand{\kw}[1]{{\ensuremath {\mathsf{#1}}}\xspace}
+\newcommand{\kws}[1]{\textsf{\scriptsize{#1}}\xspace}
+\newcommand{\bkw}[1]{{\ensuremath {\mathsf{\textbf{#1}}}}\xspace}
+
+\newcommand{\kwnospace}[1]{{\ensuremath {\mathsf{#1}}}}
+%=============defined for reference======
+\newcommand{\attr}{\kw{attr}}
+\newcommand{\sch}{\kw{sch}}
+\newcommand{\Dom}{\kw{Dom}}
+\newcommand{\meta}{\kw{meta}}
+\newcommand{\vars}{\kw{vars}}
+\newcommand{\vlabel}{\mathcal{L}}
+\newcommand{\elabel}{\mathcal{T}}
+\newcommand{\lab}{\kw{Label}}
+\newcommand{\labx}{\kwnospace{Label}}
+\newcommand{\id}{\kw{Id}}
+\newcommand{\idx}{\kwnospace{Id}}
+\newcommand{\shortest}{\kw{min}}
+\newcommand{\simple}{\kw{simple}}
+\newcommand{\pred}{\kw{pred}}
+\newcommand{\vpred}{\kw{vpred}}
+\newcommand{\epred}{\kw{epred}}
+\newcommand{\getV}{\kw{getV}}
+\newcommand{\getE}{\kw{getE}}
+\newcommand{\short}{\kw{short}}
+\newcommand{\In}{\downarrow}
+\newcommand{\Out}{\uparrow}
+\newcommand{\Both}{\updownarrow}
+\newcommand{\InE}{\swarrow}
+\newcommand{\OutE}{\nearrow}
+\newcommand{\BothE}{\neswarrow}
+\newcommand{\NotIn}{\bar{\In}}
+\newcommand{\NotOut}{\bar{\Out}}
+\newcommand{\NotBoth}{\bar{\Both}}
+\newcommand{\vecExpandIn}{\vec{\In}}
+\newcommand{\vecExpandOut}{\vec{\Out}}
+\newcommand{\vecExpandBoth}{\vec{\Both}}
+\newcommand{\allDistinct}{\not\equiv}
+\newcommand{\params}{\kw{params}}
+\newcommand{\code}{\texttt}
+\newcommand{\apply}{\mathcal{A}}
+\newcommand{\segapply}{\mathcal{SA}}
+% enclose given text with a single quote in the math mode
+\newcommand{\sq}[1]{`#1\mrq}
+\newcommand{\either}{\kw{Either}}
+\newcommand{\todo}[1]{\textcolor{red}{$\Rightarrow$#1}}
+
 
 \begin{document}
 \title{Converged Optimizer for Efficient Join Order Optimization}
@@ -52,7 +113,7 @@
 
 \maketitle
 
-\section{Motivation}
+\section{Introduction}
 
 SQL/Property Graph Queries is Part 16 of SQL 2023
 Graphs are presented as views, and the vertices and edges in the graphs are represented as tables
@@ -69,29 +130,305 @@ However, neither of them are suitable for SQL/PGQ queries.
 Because they can only optimize the queries from the relational perspective or the graph perspective, but not both.
 In this paper, we are going to propose a new converged framework for query optimization of SQL/PGQ statements.
 
-There are mainly x challenges.
+There are mainly three challenges.
 
 \textbf{Challenge 1. Relational optimizers cannot be used to optimize graph queries directly (or with limited efficiency)}.
 It is true that the vertices and edges in graphs can be represented as corresponding tables in relational databases, and the paths in the graphs can be translated into join operators in relational algebra.
 However, since the relational optimizers only take the relational operators into consideration, some efficient graph operators (e.g., get edge, get vertex, get neighbors with graph indices) are ignored in the process of optimization.
 Therefore, the search space is artificially reduced, the best physical plan are likely to be missed.
 An intuitive idea is to replace some relational operators with graph operators after the physical plans are obtained (e.g., replace some join operators with getV/getE/getNeighbor in graph operators) to take advantage of the benefits brought about by graph operators.
+Then, the obtained new plan are probabily not the optimizal plan, and the estimated costs are inaccurate.
 
 \begin{example}
-    An example about 
+    An example about replace join with getV/getE/getNeighbor,
+    or the example of duckdb, whether to indicate more constraints (due to the unawareness of getNeighbor)
 \end{example}
 
-However, relational queries cannot always be expressed as graph queries.
-The first reason is that 
+
+\textbf{Challenge 2. Graph optimizers sometimes cannot be used to optimize relational queries directly}.
+Relational queries cannot always be expressed as graph queries with no effort.
+When the tables in a relational query do not possess the semantics of vertices and edges, graph optimizers cannot be applied to optimize such queries.
+An example is as follows:
+
+\begin{example}
+    An example about:
+    relation query for [p1]-join-[p2]-join-[p3]
+    where, person p1, p2, and p3 have the same birthday
+    Then, none of the tables can represent the edges, and the graph optimizer cannot be applied.
+    An alternative is to create a new table \textbf{HAS\_SAME\_BIRTHDAY} = (id, person1id, person2id), each of whose record represents two persons having the same birthday.
+    Then, the query should be converted to [p1]-join-[hsb]-join-[p2]-join=[hsb]-join-[p3].
+    However, it is not practical to create new tables in the process of query optimization.
+\end{example}
+
+Moreover, relational query optimization has undergone numerous years of research and has accumulated a significant body of research findings.
+Therefore, it would be unwise to abandon relational query optimization in favor of direct graph query optimization.
 
 
-\section{Data Model}
+\textbf{Challenge 3. How to ensure worst-case-optimal joins (WCOJs)}.
+Graph queries can be much more complex than relational queries, and multiple joins are common in graph queries.
+Then, it is necessary to support WCOJs in the optimizer, which can reduce the complexity of 
 
 
-\section{Graph Relational Algebra (or another name)}
+In this paper, we propose a new converged optimization framework for SQL/PGQ.
+It can optimize SQL/PGQ statements for query.
+Specifically, the framework first optimize the graph queries in the statement and generate the corresponding graph physical plans.
+[Since there may be join operators in the graph physical plans, the plan can be considered to be connected with join operators.
+Then, the plan is combined with the left relational queries, the new query is optimized again with the relational optimizer.]
+
+The contributions of this paper is mainly as follows:
+
+(1) To the best of our knowledge, this is the first optimization framework for SQL/PGQ.
+Property graphs are represented as views in SQL/PGQ, and vertices and edges are associated with tables in the relational databases.
+Then, it is crucial to offer the converged query optimizer efficient for both relational and graph queries.
+
+(2) The framework is the first to [unify] the inputs and outputs of the graph optimizer and relational optimizer based on the graph relational algebra, and propose the nested optimization strategy (abbr.~NOS) for SQL/PGQ queries.
+In detail, given a SQL/PGQ query, NOS first optimizes the graph queries with the graph optimizer.
+The output plan is then optimized together with the relational queries by the relational optimizer.
+% In the framework, we design and implement numerous important operators for graph optimizer, including getV, getE, getNeighbor, and extendIntersect.
+% Specifically, the extendIntersect operator is helpful in supporting worst-case optimality.
+
+(3) Theoretical analysis on the complexity of the optimization framework is conducted.
+The obtained theorems prove that for graph queries, the join order optimization with a graph optimizer can be exponentially faster than that with a relational optimizer. 
+It theoretically confirms that relational optimizer is usually not suitable for graph queries, and it is indispensable for the existence of a converged optimization framework.
+
+(4) Extensive experiments are conducted to show the efficiency of the proposed converged query optimization framework.
+The experimental results show that the framework can be ?$\times$ faster than the baselines.
+
+The rest of this paper is organized as follows.
+
+
+\section{Preliminaries}
+\label{sec:preliminaries}
+
+\subsection{Data Model}
+Let $L$ be a finite set of labels, $D = \bigcup_i D_i$ be the union of atomic domains $D_i$, and $\epsilon$ be the \kw{NULL} value. We define a \textit{property graph} as $G = (V, E, \lambda, \vlabel, \elabel, P_v, P_e)$, where
+\begin{itemize}
+    \item $V$ is a finite set of vertices,
+    \item $E$ is a finite set of edges,
+    \item $\lambda: E \mapsto V \times V$ connects each edge $e$ with a tuple $(s, t)$ of source and target vertices,
+    \item $\vlabel: V \mapsto 2^L$ assigns a set of labels to each vertex,
+    \item $\elabel: E \mapsto L$ assigns a label to each edge,
+    \item $P_v$ is a set of vertex properties, where $p_v^i: V \mapsto D_i \cup \{\epsilon\}$ is a partial function that assigns a property value in $D_i$ to each vertex. 
+    In particular, if a vertex $v$ does not have the property $p_v^i$, $p_v^i(v) = \epsilon$,
+    \item $P_e$ is a set of edge properties, where $p_e^j: E \mapsto D_j \cup \{\epsilon\}$ is a partial function that assigns a property value in $D_j$ to each edge. 
+    In particular, if an edge $e$ does not have the property $p_e^j$, $p_e^j(e) = \epsilon$.
+\end{itemize}
+
+Let $U = \{a_1, a_2, \ldots, a_n\}$ be a finite set of attributes, then $S = (a_1, a_2, \ldots, a_n)$ is called a schema over $U$. 
+The attributes of $S$ is denoted as $\attr(R) = U$. The value of each attribute $a \in \attr(S)$ comes from specific domain, denoted as $\Dom(a)$.
+
+Given a property graph $G$, a graph schema is such a schema $S$ that $\forall a \in \attr(S)$, $\Dom(a) \subseteq V \cup E \cup D$. 
+In other words, each attribute of a graph schema is either a vertex, or an edge, or data from arbitrary domain. 
+A relation $R$ over a graph schema $S$ (i.e. $\sch(R) = S$) is called a graph relation. 
+For simplicity, we denote $\attr(R)$ in short for $\attr(S)$ with $\sch(R) = S$ to retrieve the attributes of a graph relation $R$. 
+We write $R.a$ to access a given attribute $a$ in the relation $R$. 
+
+Given a graph relation $R$, if $a \in \attr(R) \subseteq V \cup E$, we can further access the property $p$ on the vertex/edge attribute via $p(R.a)$ (or $p(a)$ if the relation $R$ is clear in the context). 
+Particularly, we use $\id$ and $\lab$ to denote the built-in properties of the globally unique identifier and label of a vertex/edge. 
+To clarify ambiguity, the term ``attribute'' always refers to the attribute of a relation, while the term ``property'' always refers to the property of a graph element in this article.
+
+There is a unique concept of \emph{path} while traversing a graph data structure. 
+A path is an ordered sequence of edge segments that have been traversed in the graph, where each edge segment $\varepsilon = (sv, e, tv)$, is a 3-tuple with $e$ as the edge field, and $sv$ and $tv$ as the source and target vertices of the edge. 
+The number of edge segments that a path $p$ contains is the length of the path, denoted as $|p|$. For example, $ p = \{\varepsilon_1, \varepsilon_2, \ldots, \varepsilon_k\}$ ($\varepsilon_i = (sv_i, e_i, tv_i)$) refers to a path that go through the edges of $e_1, \ldots, e_k$, whose length is $k$. 
+Although path is typically represented in a simpler form as either the vertex sequence (only the vertices it passed) or the edge sequence (only the edges it passed), we maintain the edge segment in this article to allow flexible manipulations on the path, e.g. path unwinding. 
+
+\subsection{Graph Relational Algebra}
+
+Some graph-related operators are also defined in the graph relational algebra.
+Typical operators are shown as follows.
+
+A list of graph-related operators.
 
 
 \section{Converged Graph Relational Optimizer}
+
+\subsection{Overview of the Framework}
+
+A system overview figure and some introduction
+
+\subsection{Leveraging Benefits of Both Relational and Graph Optimizers}
+
+\subsection{Detailed Optimizations}
+
+CBO strategies, RBO strategies
+
+ExtendedIntersection
+
+Wort-Case Optimal
+
+
+
+\section{Superiority of the Graph Optimizer on Graph Queries}
+\label{sec:theoretical-analysis}
+
+In this section, we prove that graph optimizers have better performance than relational optimizers.
+Besides, since graph optimizers cannot always be used to optimize relational queries, it confirms the necessity of proposing the converged query optimization.
+
+As one of the most widely adopted optimizers for relational databases, we use Calcite \cite{calcite,columbia} as a representative of relational JOPTs and analyze its efficiency of join order optimization.
+For the converged JOPT, we use GLogue \cite{GLogS} as the graph JOPT, and integrate it with Calcite.
+
+A more simple condition is first considered.
+That is, all the tables in the query can represent vertices or edges.
+Then, it is supposed that there are $n + m$ tables are joined together, where $n$ tables represent vertices while $m$ tables represent edges.
+Suppose that there are $t$ implementation methods for join.
+The complexities of optimizing the join order with Calcite and the converged JOPT are analyzed respectively as follows.
+For simplicity, the time complexities are evaluated by the number of physical plans generated by the JOPTs.
+
+\begin{theorem}
+    \label{theorem:complexity-of-calcite}
+    The time complexity of join order optimization with Calcite is at least $O(\frac{4^{m+n-1}}{m+n}t^{m+n-1})$.
+\end{theorem}
+\begin{proof}
+    The $n + m$ tables joined together can form a graph, where the tables represent vertices in the graph, and if there is a join condition specifying the equivalence of two columns in two two tables, there is an edge between these two tables.
+    Then, the complexity of join order optimization with Calcite can be estimated as the number of possible physical plans that can be generated.
+    
+    To avoid cross product, except for the first table, the selected tables to be be joined with the already chosen tables should be neighbors of the chosen tables in the graph.
+    Therefore, the join order can be represented as a spanning tree in the graph.
+    By computing the number of physical plans can be generated according to each spanning tree, the total number of physical plans can be obtained.
+    However, same phyical plans may be obtained according to different spanning trees.
+    For example, suppose a graph is a rectangle with four vertices and four edges.
+    It may be constructed for a query like:
+    \begin{equation*}
+        \begin{split}
+            \text{SELECT}\hspace{.5em} ... & \hspace{.5em}\text{FROM}\hspace{.5em} A, B, C, D \hspace{.5em}\text{WHERE}\hspace{.5em} A.1 = B.1 \\ 
+            & \hspace{.5em}\text{AND}\hspace{.5em} B.2 = C.1 \hspace{.5em}\text{AND}\hspace{.5em} C.2 = D.1 \hspace{.5em}\text{AND}\hspace{.5em} D.2 = A.2. 
+        \end{split}
+    \end{equation*}
+    Then, the spanning tree with edges \{AB, BC, CD\} and the one with edges \{AB, BC, AD\} can generate same physical plans.
+    Consequently, the summation of the number of physical plans corresponding to all the spanning trees is larger than the actual number of physical plans.
+    In this proof, we compute the number of physical plans for one spanning tree, and this number is the lower bound of the number of physical plans that can be generated.
+
+    Given a spanning tree with $k$ edges (i.e., $k+1$ vertices representing tables) and only one leaf node, the number of logical plans corresponding to the spanning tree is roughly
+    \begin{equation*}
+        \begin{split}
+            c(k) & = 2 * (c(0)c(k-1) + c(1)c(k-2) + \cdots + c(k-1)c(0)) \\
+            & = 2\Sigma_{i=0}^{i=k-1}c(i)c(k-1-i), \\
+            & \text{where } c(0) = 1.
+        \end{split}
+    \end{equation*}
+    With the generating function, it is obtained that 
+    \begin{equation*}
+        c(k) = \frac{2^k}{k+1}C(2k, k).
+    \end{equation*}
+    Since $k$ is the number of edges, and $k = m + n - 1$ in the spanning tree.
+    Thus, the number of logical plans w.r.t.~a spanning tree is 
+    \begin{equation*}
+        \frac{2^{m+n-1}}{m+n}C(2m+2n-2, m+n-1) \geq \frac{4^{m+n-1}}{m+n}.
+    \end{equation*}
+   Then, the number of physical plans is at least $\frac{4^{m+n-1}}{m+n}t^{m+n-1}$, so is the complexity of join order optimization with Calcite.
+   
+   In conclusion, Theorem \ref{theorem:complexity-of-calcite} is correct.
+\end{proof}
+
+\begin{lemma}
+    \label{lemma:upper-bound-of-calcite}
+    Given $n$ tables, the time complexity of join order optimization with Calcite has an upper bound of $O(\frac{(2n-2)!}{(n-1)!}t^{n-1})$.
+\end{lemma}
+\begin{proof}
+    The upper bound of the time complexity of join order optimization is achieved when there is a condition between any two of the $n$ tables.
+    Because at that time, the tables can be joined in any order.
+
+    Since each join order corresponds to a full binary tree with $2n-1$ nodes, the problem is to count the number of possible full binary trees.
+    Similar to Catalan number, the number of full binary trees is $O(C(2n-2, n-1) - C(2n-2, n))$.
+    For each full binary tree, there are $n!$ ways to set the leaf nodes. 
+    Then, the number of generated physical plans is $O(\frac{(2n-2)!}{(n-1)!}t^{n-1})$.
+\end{proof}
+
+\begin{theorem}
+    \label{theorem:complexity-of-glogue}
+    The time complexity of join order optimization with the converged JOPT is smaller than $3^n$ if all the tables participant in join can represent vertices or edges.
+\end{theorem}
+\begin{proof}
+    Since the $n + m$ tables represent vertices and edges respectively and the join among them can be represented as a graph query, the converged JOPT optimizes the join order with the graph optimizer, i.e., GLogue.
+
+    As GLogue ensures worst-case optimality and the considered patterns are all induced subgraphs, the time complexity of join order optimization with GLogue is not related to the number of edges (i.e., $m$).
+    Because JOOP is reduced to a variant of shortest path problem, the time complexity of join order optimization is $O(\mathcal{E})$, where $\mathcal{E}$ is the number of edges in GLogue.
+    In detail, 
+    \begin{equation*}
+        \begin{split}
+            O(\mathcal{E}) & = C(n, n-1)*(2^{n-1}-1) + C(n, n-2) * (2^{n-2}- 1) \\
+            & + \cdots + C(n, 1) * (2^1 - 1) \\
+            & = 3^n - 2^{n+1} +1 \\
+            & < 3^n.
+        \end{split}
+    \end{equation*}
+    
+    In conclusion, Theorem \ref{theorem:complexity-of-glogue} is correct.
+
+\end{proof}
+
+Based on the complexity analysis in Theorem \ref{theorem:complexity-of-calcite} and Theorem \ref{theorem:complexity-of-glogue}, it is found that when the tables represent vertices and edges, 
+\begin{equation*}
+    \begin{split}
+        \frac{\text{Time Complexity of Calcite}}{\text{Time Complexity of the Converged JOPT}} & = \frac{\frac{4^{m+n-1}}{m+n}}{3^n}t^{m+n-1} \\
+        & \geq 2^{m-3}(\frac{4}{3})^nt^{m+n-1}.
+    \end{split}
+\end{equation*}
+Therefore, it suggests that the converged JOPT is exponentially faster than Calcite for graph-like join order optimization.
+The results also indicates that integrating graph optimizers into relational optimizers can improve the efficiency of join order optimization significantly.
+
+
+Then, if there are some tables that cannot represent vertices or edges, the order of such tables cannot be optimized with graph optimizers, and the comparion becomes more complicate.
+For example, suppose five tables form a clique, and then these tables cannot be vertices or edges in a graph.
+Specifically, according to the dataflow shown in Fig.~\ref{fig:dataflow}, the join order of these left tables are optimzed by relational optimizers such as Calcite.
+Let the number of left tables be $s$, and together with the table obtained by the join of the tables optimized with graph optimizer, Calcite needs to optimize the join order among $s + 1$ tables.
+
+When $s = 0$, all the tables represent vertices or edges, and the time complexity of the converged JOPT is exponentially smaller than that of Calcite as analyzed as above.
+
+When $s = 1$, only one table (saying $T_1$) does not represent a vertex or an edge, and Calcite optimizes the join between two tables.
+One of these two tables is $T_1$, and the other is the table obtained by the join of the tables optimized with graph optimizer.
+Then, we have
+\begin{equation*}
+    \begin{split}
+        \frac{\text{Time Complexity of Calcite}}{\text{Time Complexity of the Converged JOPT}} > \hspace{-12em} & \\
+        & \frac{\frac{2^{m+n-1}}{m+n}C(2m+2n-2, m+n-1)t^{m + n - 1}}{3^{\hat{n}} + \frac{(2s)!}{(s)!}t^{s}} \\
+        & = \frac{\frac{2^{m+n-1}}{m+n}C(2m+2n-2, m+n-1)t^{m + n - 1}}{3^{\hat{n}} + 2} >> 1,
+    \end{split}
+\end{equation*}
+where $\hat{n}$ is the number of tables representing vertices.
+It indicates the superiority of the converged JOPT.
+
+When $s = m + n - 1$ or $p = m + n$, at most one table can represent vertices or edges, and the converged JOPT degenerates to Calcite, and has the same efficiency as it.
+A typical example is when there is a condition between any two of these $m + n$ tables.
+
+The results show that the converged JOPT is always superior to relational JOPTs.
+To be more specific, we prove the superiority of the converged JOPT more theoretically.
+
+\begin{lemma}
+    \label{lemma:join-spliter}
+    Let $\text{JN}_c(V_s)$ represent the number of possible physical plans of joining tables in table set $V_s$ with Calcite.
+    Suppose $n$ tables (denoted as table set $V$) are joined, and $V = (V_1 - u) \cup V_2$, $V_1 \cap V_2 = \emptyset$.
+    Specifically, $u \in V_1$ is a table representing the results of joining the tables in $V_2$.
+    For each table $t_2 \in V_2$, if there is a join condition between $t_2$ and a table $v$ in $V_1$, the same join condition exists between $u$ and $v$.
+    Then, we have $\text{JN}_c(V) \geq \text{JN}_c(V_1) * \text{JN}_c(V_2)$.
+\end{lemma}
+\begin{proof}
+    For a physical plan generated by joining tables in $V_1$ (denoted as $p_1$) and a plan generated by joining tables in $V_2$ (denoted as $p_2$), by replacing $u$ in $p_1$ with $p_2$, we can generate a physical plan of joining tables in in $V$.
+    Besides, since the tables in $p_1$ cannot be interchanged with tables in $p_2$, more physical plans can be generated by joining tables in $V$.
+    In conclusion, we have $\text{JN}_c(V) \geq \text{JN}_c(V_1) * \text{JN}_c(V_2)$.
+\end{proof}
+
+\begin{theorem}
+    \label{theorem:complexity-of-converged-jopt}
+    The time complexity of join order optimization with the converged JOPT is always smaller than that with Calcite.
+\end{theorem}
+\begin{proof}
+    Denote the set of tables that cannot represent vertices and edges by $S$.
+    Besides, denote the set of tables that represent vertices and edges by $R$, and denote the table obtained by joining the tables in $R$ by $T_r$.
+    Then, we have $S_r = S \cup T_r$.
+    Moreover, let $s = |S|$ and $r = |R|$ represent the size of tables set $S$ and $R$, respectively, and let $s_v$ be the number of tables in $S$ representing vertices.
+    Denote the number of possible physical plans of joining tables in $R$ with GLogue by $\text{JN}_g(R)$.
+    
+    Specifically, according to Theorem \ref{theorem:complexity-of-calcite} and Theorem \ref{theorem:complexity-of-glogue}, we have $\text{JN}_g(R) < 3^{s_v} \leq \frac{4^{r-1}}{r}t^{r-1} \leq \text{JN}_c(R)$.
+    Note that $T_r$ corresponds to $u$ in Lemma \ref{lemma:join-spliter}.
+    Based on Lemma \ref{lemma:join-spliter}, we have $\text{JN}_c(S \cup R) \geq \text{JN}_c(S_r) * \text{JN}_c(R) \geq \text{JN}_c(S_r) * \text{JN}_g(R)$.
+    In conclusion, Theorem \ref{theorem:complexity-of-converged-jopt} is correct, and the converged JOPT always has smaller time complexity than Calcite.
+\end{proof}
+
+There are mainly three reasons contributing to the efficient performance of the converged JOPT:
+(1) Different implementations of the join operators are not considered in the converged JOPT, because the neighbors of vertices can be efficiently accessed with the graph indices.
+(2) In the converged JOPT, only the number of vertices influence the complexity of join order optimization, while the complexity is determined by both the numbers of vertices and edges in Calcite.
+(3) The converged JOPT can take isomorphism into consideration in optimization and further reduce the search space, while Calcite does not consider optimization related to isomorphism.
 
 
 \section{Evaluation}
