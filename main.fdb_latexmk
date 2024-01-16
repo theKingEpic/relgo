@@ -1,14 +1,14 @@
 # Fdb version 4
-["bibtex main"] 1705318410 "main.aux" "main.bbl" "main" 1705318412 0
+["bibtex main"] 1705397679 "main.aux" "main.bbl" "main" 1705398456 0
   "./ACM-Reference-Format.bst" 1619726048 84856 cdf46f74ac483d72585084276eb3e09d ""
   "./sample.bib" 1698642350 46365 7f76d18e19418874536504643e52f9be ""
-  "main.aux" 1705318411 3331 b1268a7c5311cfddb6cdca28530bd9e9 "pdflatex"
+  "main.aux" 1705398455 3343 51a05770d8fe80b8bddbcbcbec534c49 "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1705318411 "/Users/louyk/Desktop/papers/VLDB/main.tex" "main.pdf" "main" 1705318412 0
-  "/Users/louyk/Desktop/papers/VLDB/main.tex" 1705318409 26094 89b0dae5c5ecf4cab7e56f9a384565eb ""
+["pdflatex"] 1705398454 "/Users/louyk/Desktop/papers/VLDB/main.tex" "main.pdf" "main" 1705398456 0
+  "/Users/louyk/Desktop/papers/VLDB/main.tex" 1705398454 28350 b8372097751aa9b822b6cbacbf7d3f96 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/libertine/lbtn_25tcsq.enc" 1490131464 2921 8ca0eb0831f9bc5da080d3697cfe67bf ""
   "/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/libertine/lbtn_76gpa5.enc" 1490131464 2933 9ad527ce78d7c5fa0a642dead095f172 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/libertine/lbtn_7grukw.enc" 1490131464 2934 a4a9158faed2e9e89c771b4e3b7fc12f ""
@@ -72,6 +72,7 @@
   "/usr/local/texlive/2023/texmf-dist/fonts/tfm/public/stmaryrd/stmary9.tfm" 1302307949 848 594c171945930dfc7cc52fb30457c803 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/tfm/public/txfonts/txsya.tfm" 1136768653 972 2c9ffac4bbd20f91c01aaef9bf3f8710 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/tfm/public/txfonts/txsyb.tfm" 1136768653 988 098ca7e8cc5647b9ac21b82dbdce1f01 ""
+  "/usr/local/texlive/2023/texmf-dist/fonts/tfm/public/txfonts/txsyc.tfm" 1136768653 1084 75e807e9e71f7a312e4e1187dce5e93b ""
   "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/libertine/LinBiolinumT.pfb" 1354061736 548786 1e51d517556d29f2841d57da58668a69 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/libertine/LinBiolinumTB.pfb" 1354061736 687959 b99c9f5a9b28f3dba077d1c078bceb3f ""
   "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/libertine/LinLibertineT.pfb" 1354061736 614791 ea39341e4db76f25cb20c361802d3cd5 ""
@@ -87,6 +88,7 @@
   "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/newtx/txmiaX.pfb" 1635022465 56686 b959be5e2e4a0232f5aa4c1c4be4574a ""
   "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/newtx/txsys.pfb" 1569879884 40320 53cb337366eff502cad8f44871c88e39 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/txfonts/txsya.pfb" 1136849748 18865 ebb26de41fddbc82c044d680eec38cec ""
+  "/usr/local/texlive/2023/texmf-dist/fonts/type1/public/txfonts/txsyc.pfb" 1136849748 27693 bfb340b71292c6ead561e4943433945d ""
   "/usr/local/texlive/2023/texmf-dist/fonts/vf/public/libertine/LinBiolinumT-tlf-t1.vf" 1490131464 1728 e76e04a950024a95b620698b679c9810 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/vf/public/libertine/LinBiolinumTB-tlf-t1.vf" 1354061736 1728 4ae633ddccb76ba8d0a0906a5e2e8fdf ""
   "/usr/local/texlive/2023/texmf-dist/fonts/vf/public/libertine/LinLibertineT-tlf-ot1.vf" 1490131464 968 b4daf26f130460f16d670da7f3f6963f ""
@@ -99,6 +101,7 @@
   "/usr/local/texlive/2023/texmf-dist/fonts/vf/public/newtx/ntxsy.vf" 1583272976 1772 98ec0ab31216e818611c784f60ef51a5 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/vf/public/newtx/ntxsy5.vf" 1634244313 1816 69627b488a1551599f71196b620f91a7 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/vf/public/newtx/ntxsy7.vf" 1634244313 1900 7edab28ff3dc70ba23d9121ff6e8e785 ""
+  "/usr/local/texlive/2023/texmf-dist/fonts/vf/public/newtx/ntxsyc.vf" 1589834365 1416 0899d39e91a1120b2d81c897e9865e89 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/vf/public/newtx/ntxsym.vf" 1569879884 2004 3a0866355d95176afe52235bd210579a ""
   "/usr/local/texlive/2023/texmf-dist/fonts/vf/public/newtx/nxlmi.vf" 1569879884 2744 3e5ba39e1559219ae379b7645e2f9524 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/vf/public/newtx/nxlmi5.vf" 1569879884 2740 c8b5f27ae076b0aa71375fdbd19167ca ""
@@ -237,10 +240,10 @@
   "/usr/local/texlive/2023/texmf-var/web2c/pdftex/pdflatex.fmt" 1689754629 7883453 1deeee0a4eebc78358f976bc59fb1229 ""
   "/usr/local/texlive/2023/texmf.cnf" 1678822455 577 1b2b1af17af2508fb20dd85783af4050 ""
   "acmart.cls" 1619726048 96943 22aab88eb4450dc97aba90abe39b216c ""
-  "main.aux" 1705318411 3331 b1268a7c5311cfddb6cdca28530bd9e9 "pdflatex"
-  "main.bbl" 1705318411 3678 595490d791160b238a0c936cb1d7e32a "bibtex main"
-  "main.out" 1705318411 2475 c6ef405feca3da1eef70351fb45ac009 "pdflatex"
-  "main.tex" 1705318409 26094 89b0dae5c5ecf4cab7e56f9a384565eb ""
+  "main.aux" 1705398455 3343 51a05770d8fe80b8bddbcbcbec534c49 "pdflatex"
+  "main.bbl" 1705397679 3678 595490d791160b238a0c936cb1d7e32a "bibtex main"
+  "main.out" 1705398455 2475 c6ef405feca3da1eef70351fb45ac009 "pdflatex"
+  "main.tex" 1705398454 28350 b8372097751aa9b822b6cbacbf7d3f96 ""
   (generated)
   "main.aux"
   "main.log"
