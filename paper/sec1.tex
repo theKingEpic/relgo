@@ -1,0 +1,84 @@
+\section{Introduction}
+
+SQL/Property Graph Queries is Part 16 of SQL 2023
+Graphs are presented as views, and the vertices and edges in the graphs are represented as tables
+For queries, the graph queries and relational queries can be expressed in one statement.
+
+\begin{example}
+An example about how to write the sql/pgq query.
+\end{example}
+
+Query optimization is crucial for query processing.
+The optimizer can significantly influence the efficiency of query processing.
+There are already many works about relational query optimizers, and some works about graph query optimizers.
+However, neither of them are suitable for SQL/PGQ queries.
+Because they can only optimize the queries from the relational perspective or the graph perspective, but not both.
+In this paper, we are going to propose a new converged framework for query optimization of SQL/PGQ statements.
+
+There are mainly three challenges.
+
+\textbf{Challenge 1. Relational optimizers cannot be used to optimize graph queries directly (or with limited efficiency)}.
+It is true that the vertices and edges in graphs can be represented as corresponding tables in relational databases, and the paths in the graphs can be translated into join operators in relational algebra.
+However, since the relational optimizers only take the relational operators into consideration, some efficient graph operators (e.g., get edge, get vertex, get neighbors with graph indices) are ignored in the process of optimization.
+Therefore, the search space is artificially reduced, the best physical plan are likely to be missed.
+An intuitive idea is to replace some relational operators with graph operators after the physical plans are obtained (e.g., replace some join operators with getV/getE/getNeighbor in graph operators) to take advantage of the benefits brought about by graph operators.
+Then, the obtained new plan are probabily not the optimizal plan, and the estimated costs are inaccurate.
+
+\begin{example}
+    An example about replace join with getV/getE/getNeighbor,
+    or the example of duckdb, whether to indicate more constraints (due to the unawareness of getNeighbor)
+\end{example}
+
+
+\textbf{Challenge 2. Graph optimizers sometimes cannot be used to optimize relational queries directly}.
+Relational queries cannot always be expressed as graph queries with no effort.
+When the tables in a relational query do not possess the semantics of vertices and edges, graph optimizers cannot be applied to optimize such queries.
+An example is as follows:
+
+\begin{example}
+    An example about:
+    relation query for [p1]-join-[p2]-join-[p3]
+    where, person p1, p2, and p3 have the same birthday
+    Then, none of the tables can represent the edges, and the graph optimizer cannot be applied.
+    An alternative is to create a new table \textbf{HAS\_SAME\_BIRTHDAY} = (id, person1id, person2id), each of whose record represents two persons having the same birthday.
+    Then, the query should be converted to [p1]-join-[hsb]-join-[p2]-join=[hsb]-join-[p3].
+    However, it is not practical to create new tables in the process of query optimization.
+\end{example}
+
+Moreover, relational query optimization has undergone numerous years of research and has accumulated a significant body of research findings.
+Therefore, it would be unwise to abandon relational query optimization in favor of direct graph query optimization.
+
+
+\textbf{Challenge 3. How to ensure worst-case-optimal joins (WCOJs)}.
+Graph queries can be much more complex than relational queries, and multiple joins are common in graph queries.
+Then, it is necessary to support WCOJs in the optimizer, which can reduce the complexity of 
+
+
+In this paper, we propose a new converged optimization framework for SQL/PGQ.
+It can optimize SQL/PGQ statements for query.
+Specifically, the framework first optimize the graph queries in the statement and generate the corresponding graph physical plans.
+[Since there may be join operators in the graph physical plans, the plan can be considered to be connected with join operators.
+Then, the plan is combined with the left relational queries, the new query is optimized again with the relational optimizer.]
+
+The contributions of this paper is mainly as follows:
+
+(1) To the best of our knowledge, this is the first optimization framework for SQL/PGQ.
+Property graphs are represented as views in SQL/PGQ, and vertices and edges are associated with tables in the relational databases.
+Then, it is crucial to offer the converged query optimizer efficient for both relational and graph queries.
+
+(2) The framework is the first to [unify] the inputs and outputs of the graph optimizer and relational optimizer based on the graph relational algebra, and propose the nested optimization strategy (abbr.~NOS) for SQL/PGQ queries.
+In detail, given a SQL/PGQ query, NOS first optimizes the graph queries with the graph optimizer.
+The output plan is then optimized together with the relational queries by the relational optimizer.
+% In the framework, we design and implement numerous important operators for graph optimizer, including getV, getE, getNeighbor, and extendIntersect.
+% Specifically, the extendIntersect operator is helpful in supporting worst-case optimality.
+
+(3) Theoretical analysis on the complexity of the optimization framework is conducted.
+The obtained theorems prove that for graph queries, the join order optimization with a graph optimizer can be exponentially faster than that with a relational optimizer. 
+It theoretically confirms that relational optimizer is usually not suitable for graph queries, and it is indispensable for the existence of a converged optimization framework.
+
+(4) Extensive experiments are conducted to show the efficiency of the proposed converged query optimization framework.
+The experimental results show that the framework can be ?$\times$ faster than the baselines.
+
+The rest of this paper is organized as follows.
+
+

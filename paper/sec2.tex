@@ -1,0 +1,76 @@
+\section{Preliminaries}
+\label{sec:preliminaries}
+
+\subsection{Data Model}
+Let $L$ be a finite set of labels, $D = \bigcup_i D_i$ be the union of atomic domains $D_i$, and $\epsilon$ be the \kw{NULL} value. We define a \textit{property graph} as $G = (V, E, \lambda, L, T, \vlabel, \elabel, P_v, P_e)$, where
+\begin{itemize}
+    \item $V$ is a finite set of vertices,
+    \item $E$ is a finite set of edges,
+    \item $\lambda: E \mapsto V \times V$ connects each edge $e$ with a tuple $(s, t)$ of source and target vertices,
+    \item $\vlabel: V \mapsto 2^L$ assigns a set of labels to each vertex,
+    \item $\elabel: E \mapsto T$ assigns a type to each edge,
+    \item $P_v$ is a set of vertex properties, where $p_v^i: V \mapsto D_i \cup \{\epsilon\}$ is a partial function that assigns a property value in $D_i$ to each vertex. 
+    In particular, if a vertex $v$ does not have the property $p_v^i$, $p_v^i(v) = \epsilon$,
+    \item $P_e$ is a set of edge properties, where $p_e^j: E \mapsto D_j \cup \{\epsilon\}$ is a partial function that assigns a property value in $D_j$ to each edge. 
+    In particular, if an edge $e$ does not have the property $p_e^j$, $p_e^j(e) = \epsilon$.
+\end{itemize}
+
+Let $U = \{a_1, a_2, \ldots, a_n\}$ be a finite set of attributes, then $S = (a_1, a_2, \ldots, a_n)$ is called a schema over $U$. 
+The attributes of $S$ is denoted as $\attr(R) = U$. The value of each attribute $a \in \attr(S)$ comes from specific domain, denoted as $\Dom(a)$.
+
+Given a property graph $G$, a graph schema is such a schema $S$ that $\forall a \in \attr(S)$, $\Dom(a) \subseteq V \cup E \cup D$. 
+In other words, each attribute of a graph schema is either a vertex, or an edge, or data from arbitrary domain. 
+A relation $R$ over a graph schema $S$ (i.e. $\sch(R) = S$) is called a graph relation. 
+For simplicity, we denote $\attr(R)$ in short for $\attr(S)$ with $\sch(R) = S$ to retrieve the attributes of a graph relation $R$. 
+We write $R.a$ to access a given attribute $a$ in the relation $R$. 
+
+Given a graph relation $R$, if $a \in \attr(R) \subseteq V \cup E$, we can further access the property $p$ on the vertex/edge attribute via $p(R.a)$ (or $p(a)$ if the relation $R$ is clear in the context). 
+Particularly, we use $\id$ and $\lab$/$\type$ to denote the built-in properties of the globally unique identifier and label/type of a vertex/edge. 
+To clarify ambiguity, the term ``attribute'' always refers to the attribute of a relation, while the term ``property'' always refers to the property of a graph element in this article.
+
+
+\subsection{Graph Relational Algebra}
+
+In this paper, we extend the graph relational algebra for openCypher proposed in \cite{}.
+The graph relational algebra has graph relations as its outputs, and consists of operators for graph relations, such as selection ($\sigma$), projection ($\pi$), natural join ($\Join$), left-outer join ($\leftouterjoin$), get-vertices ($\bigcirc$), expand ($\updownarrow^{(w:L)}_{(v)}[e](r)$), and unwind ($\omega$).
+Graph relations default apply the \emph{bag} semantics, and assume no order for the relation unless an explicit \emph{sorting} operator is applied.
+
+
+In addition to the existing operators, we also propose a new operator tailored to the characteristics of graph queries.
+The operator is a new kind of join and named extend-intersect join.
+It is proposed to reduce the overhead of extending a partial pattern to a new vertex, where there are multiple edges between them.
+The extend-intersect join operator is defined as follows:
+
+\begin{equation}
+    \begin{split}
+        r \rhd_{v_1, \cdots, v_n} s = & \pi_{R \cup \mathcal{E} \cup S}(\sigma_{r.v_1.Id = e.sId \land e.tId = s.Id}(r \times e \times s)) \\
+        & \Join \cdots \\
+        & \Join \pi_{R \cup \mathcal{E} \cup S}(\sigma_{r.v_n.Id = e.sId \land e.tId = s.Id}(r \times e \times s)),
+    \end{split}
+\end{equation}
+where $s$ is a graph relation and each row of $s$ is a vertex,
+$e$ is a graph relation containing the all the edges,
+and $v_1, \cdots, v_n$ are the vertices in $r$ that should connect to vertices in $s$.
+
+Given a openCypher query as follows:
+\begin{equation}
+    \begin{split}
+        & MATCH (p1:Person)-[:LIKES]->(m:Message), \\
+        & (p1)-[:KNOWS]-(p2:Person)-[:LIKES]->(m:Message)
+    \end{split}
+\end{equation}
+With $\updownarrow^{(p2\text{:Person})}_{(p1)}[\text{:KNOWS}]\bigcirc_{(p1\text{:Person})}$, the partial results w.r.t.~$(p1)-[:KNOWS]-(p2)$ are obtained (denoted by $r$). 
+$r$ should be extended to the message $m$ from $p1$ and $p2$ respectively, and then intersection on $m$ is applied.
+Therefore, the extend-intersect join operator is used, and the query can be compiled to
+\begin{equation}
+    \left(\updownarrow^{(p2\text{:Person})}_{(p1)}[\text{:KNOWS}]\bigcirc_{(p1\text{:Person})}\right) \hspace{0.2em} \rhd_{p1, p2} \hspace{0.2em} \bigcirc_{m\text{:Message}}.
+\end{equation}
+
+Please note that the extend-intersect operator is friendly to vectorized query processing.
+Compared with natural joins, in the process of extend-intersection, fewer vectors are flattened and the time cost is significantly reduced.
+
+According to SQL/PGQ, the outputs of graph queries should be a relation consisting of property values, identifiers, labels or types.
+References to vertices or edges should not be returned by graph queries.
+Therefore, the outputs of the graph relational algebra are flattened with the unwind operator.
+Then, the output graph relation is converted to a relation over a relational schema, and can be involved in the following optimization of relational optimizer.
+
