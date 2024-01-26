@@ -1,11 +1,47 @@
 \section{Introduction}
 
-SQL/Property Graph Queries is Part 16 of SQL 2023
-Graphs are presented as views, and the vertices and edges in the graphs are represented as tables
-For queries, the graph queries and relational queries can be expressed in one statement.
+SQL/Property Graph Queries (abbr.~SQL/PGQ) is Part 16 of SQL 2023, which has endowed traditional SQL with the ability to define and query graphs on top of relational databases.
+In SQL/PGQ, Graphs are presented as views, and the vertices and edges in the graphs are represented as tables.
+Please note that with SQL/PGQ, graph queries and relational queries can be expressed in one statement and optimized together for a better execution plan.
+An example of a SQL/PGQ query is provided in Example \ref{example:introduction:sqlpgq}.
 
 \begin{example}
-An example about how to write the sql/pgq query.
+    \label{example:introduction:sqlpgq}
+    In this example, three tables, i.e., \textbf{Person, Knows, Department}, are stored in the relational database.
+    With SQL/PGQ, a graph view named \textbf{friendship\_graph} is created based on tables \textbf{Person} and \textbf{Knows}.
+    Specifically, rows in table \textbf{Person} represent the vertices in the graph while rows in table \textbf{Knows} represent the edges.
+    Besides, the department a person belonging to is stored in table \textbf{Person} as a foreign key (\textit{dept\_id}).
+
+    Suppose we are going to find three persons satisfying: (1) They know each other; (2) Two of them belong to the Department of Computer Science.
+    Then, the corresponding SQL/PGQ query is as follows:
+    \begin{equation}
+        \begin{split}
+            & \text{SELECT person1, person2, person3} \\
+            & \text{FROM Department p, GRAPH\_TABLE (friendship\_graph} \\
+            &            \hspace{2em} \text{MATCH} \\
+            &            \hspace{3em} \text{(p1:Person)-[:Knows]-(p2:Person)-[:Knows]-(p3:Person),} \\
+            &            \hspace{3em} \text{(p1)-[:Knows]-(p3)} \\
+            &            \hspace{2em} \text{\text{COLUMNS} (} \\
+            &                    \hspace{3em} \text{p1.name as person1,} \\
+            &                    \hspace{3em} \text{p1.dept\_id as dept1,} \\            
+            &                    \hspace{3em} \text{p2.name as person2,} \\
+            &                    \hspace{3em} \text{p2.dept\_id as dept2,} \\ 
+            &                    \hspace{3em} \text{p3.name as person3,}  \\
+            &                    \hspace{3em} \text{p3.dept\_id as dept3,}  \\
+            &        \hspace{2em} \text{)} \\
+            & \text{WHERE} \\
+            & \hspace{1em} \text{dept1 = p.dept\_id AND} \\
+            & \hspace{1em} \text{dept2 = p.dept\_id AND} \\
+            & \hspace{1em} \text{p.dept\_name = `\text{Computer Science}';} \\
+        \end{split}
+    \end{equation}
+
+    According to the first condition, the wanted three persons should form a triangle in \textbf{friendship\_graph}.
+    It is a problem of pattern matching, and such triangles are searched for on the graph view.
+    The output of the graph query is a table (named f) with three columns, i.e., person1, person2, and person3, representing the identifiers of the three persons, respectively.
+
+    For the second condition, due to the existence of the foreign key, it is efficient to perform natural join between table f and table \textbf{Department} to obtain the ideal results.
+    Please note that the results of graph queries in SQL/PGQ are still tables, and such returned tables can be exploited in relational queries.
 \end{example}
 
 Query optimization is crucial for query processing.
