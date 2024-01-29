@@ -21,6 +21,8 @@
 \usepackage{multicol}
 \usepackage{multirow}
 
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
 \newtheorem{theorem}{Theorem}
 \newtheorem{example}{Example}
 %% The following content must be adapted for the final version
@@ -93,6 +95,18 @@
 \newcommand{\sq}[1]{`#1\mrq}
 \newcommand{\either}{\kw{Either}}
 \newcommand{\todo}[1]{\textcolor{red}{$\Rightarrow$#1}}
+
+\newcommand{\kk}[1]{\texttt{#1}}
+\newcommand{\scan}{{\kk{SCAN}}}
+\newcommand{\expandedge}{{\kk{EXPAND}\_\kk{EDGE}}}
+\newcommand{\getvertex}{{\kk{GET}\_\kk{VERTEX}}}
+\newcommand{\expandvertex}{{\kk{EXPAND}}}
+\newcommand{\project}{\kk{PROJECT}}
+\newcommand{\select}{\kk{SELECT}}
+
+\newcommand{\filterrule}{\kw{FilterIntoMatchRule}}
+\newcommand{\fusionrule}{\kw{ExpandGetVFusionRule}}
+\newcommand{\trimrule}{\kw{FieldTrimRule}}
 
 
 \begin{document}

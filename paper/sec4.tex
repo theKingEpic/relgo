@@ -30,11 +30,11 @@ For simplicity, the time complexities are evaluated by the number of physical pl
     It may be constructed for a query like:
     \begin{equation*}
         \begin{split}
-            \text{SELECT}\hspace{.5em} ... & \hspace{.5em}\text{FROM}\hspace{.5em} A, B, C, D \hspace{.5em}\text{WHERE}\hspace{.5em} A.1 = B.1 \\ 
-            & \hspace{.5em}\text{AND}\hspace{.5em} B.2 = C.1 \hspace{.5em}\text{AND}\hspace{.5em} C.2 = D.1 \hspace{.5em}\text{AND}\hspace{.5em} D.2 = A.2. 
+            \text{SELECT}\hspace{.5em} ... & \hspace{.5em}\text{FROM}\hspace{.5em} A, B, C, D \hspace{.5em}\text{WHERE}\hspace{.5em} A.a1 = B.b1 \\ 
+            & \hspace{.5em}\text{AND}\hspace{.5em} B.b2 = C.c1 \hspace{.5em}\text{AND}\hspace{.5em} C.c2 = D.d1 \hspace{.5em}\text{AND}\hspace{.5em} D.d2 = A.a2. 
         \end{split}
     \end{equation*}
-    Then, the spanning tree with edges \{AB, BC, CD\} and the one with edges \{AB, BC, AD\} can generate same physical plans.
+    Then, the spanning tree with edges \{AB, BC, CD\} and the one with edges \{AB, BC, AD\} can generate the same physical plans.
     Consequently, the summation of the number of physical plans corresponding to all the spanning trees is larger than the actual number of physical plans.
     In this proof, we compute the number of physical plans for one spanning tree, and this number is the lower bound of the number of physical plans that can be generated.
 

@@ -47,6 +47,7 @@ The source operator gets vertices from a graph according to the constraints spec
 \end{definition}
 
 \begin{example}
+    // Change to a Image, with the following vertices and edges 
     Suppose property graph $G = (V, E, \lambda, L, T, \mathcal{L}, \mathcal{T}, P_v, P_e)$ represents the relationships among persons.
     In detail, $V = \{v_1, v_2, v_3, \cdots\}$, $E = \{e_1, e_2, e_3, \cdots\}$, $\lambda = \{e_1 \rightarrow (v_1, v_2), e_2 \rightarrow (v_3, v_1), e_3 \rightarrow (v_3, v_2), \cdots\}$, $\mathcal{L} = \{v_1 \rightarrow \{Person, Student\}, v_2 \rightarrow \{Person, Student\}, v_3 = \rightarrow \{Person, Teacher\}, \cdots\}$, $\mathcal{T} = \{e_1 \rightarrow Friend, e_2 \rightarrow Teaching, e_3 \rightarrow Teaching, \cdots\}$, $p_{v_1}^{\text{name}} = \text{"Alice"}$, $p_{v_1}^{\text{age}} = \text{22}$, $p_{v_2}^{\text{name}} = \text{"Bob"}$, $p_{v_2}^{\text{age}} = \text{24}$, $p_{v_3}^{\text{name}} = \text{"David"}$, $p_{v_3}^{\text{age}} = \text{46}$, $p_{v_3}^{\text{curriculum}} = [\text{"Cryptography"}$, $\text{"Compilers"}$, $\text{"Machine Learning"}]$, $p_{e_1}^{\text{since}} = \text{2015}$. 
 
@@ -217,9 +218,9 @@ The type of the edge between $v_j$ and $p.v$ needs to be one of $\{l_j^1, \cdots
 Given a openCypher query as follows:
 \begin{equation}
     \begin{split}
-        \text{MATCH} & \text{ } (p1\text{:Person})-[\text{:Likes}]->(m\text{:Message}), \\
-        & (p1)-[\text{:Knows}]-(p2\text{:Person})-[\text{:Likes}]->(m\text{:Message}) \\
-        \text{RETUR}&\text{N } p1.\text{name}
+        & \text{MATCH} \text{ } (p1\text{:Person})-[\text{:Likes}]->(m\text{:Message}), \\
+        & \hspace{1em} (p1)-[\text{:Knows}]-(p2\text{:Person})-[\text{:Likes}]->(m\text{:Message}) \\
+        & \text{RETURN } p1.\text{name}
     \end{split}
 \end{equation}
 With $\updownarrow^{(p2\text{:Person})}_{(p1)}[\text{:Knows}]\bigcirc_{(p1\text{:Person})}$, the partial results w.r.t.~$(p1)-[\text{:Knows}]-(p2)$ are obtained (denoted by $r$). 
@@ -228,6 +229,7 @@ Therefore, the extend-intersect operator is used, and the query can be compiled 
 \begin{equation}
     \left(\updownarrow^{(p2\text{:Person})}_{(p1)}[\text{:Knows}]\bigcirc_{(p1\text{:Person})}\right) \hspace{0.2em} \Diamond_{p1, p2}^{\text{Likes, Likes}} \hspace{0.2em} \bigcirc_{m\text{:Message}}.
 \end{equation}
+
 
 Please note that the extend-intersect operator is friendly to vectorized query processing.
 Compared with natural joins, in the process of extend-intersection, fewer vectors are flattened and the time cost is significantly reduced.
