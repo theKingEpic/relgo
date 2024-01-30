@@ -76,28 +76,7 @@ The above process of query processing is illustrated with the following example.
     suppose we are going to find three persons satisfying: 
     (1) These three persons know each other;
     (2) At least two of them are from the department of computer science.
-    The SQL/PGQ query for this task is as follows:
-    \begin{equation*}
-        \begin{split}
-            & \text{SELECT pn1, pn2, pn3} \\
-            & \text{FROM Department , GRAPH\_TABLE (friendship\_graph} \\
-            &  \hspace{1em} \text{MATCH} \\
-            &   \hspace{2em} \text{(p1:Person)-[:Knows]-(p2:Person)-[:Knows]-(p3:Person),} \\
-            &   \hspace{2em} \text{(p1)-[:Knows]-(p3)} \\
-            &  \hspace{1em} \text{COLUMNS (} \\
-            &   \hspace{2em} \text{p1.name as pn1,} \\
-            &   \hspace{2em} \text{p1.dept\_id as dept1,} \\
-            &   \hspace{2em} \text{p2.name as pn2,} \\
-            &   \hspace{2em} \text{p2.dept\_id as dept2,} \\
-            &   \hspace{2em} \text{p3.name as pn3,} \\
-            &   \hspace{2em} \text{p3.dept\_id as dept3} \\
-            & \hspace{1em} \text{)} \\
-            & \text{WHERE} \\ 
-            &   \hspace{1em} \text{dept1 = dept.dept\_id AND} \\
-            & \hspace{1em} \text{dept2 = dept.dept\_id AND} \\
-            & \hspace{1em} \text{dept.dept\_name = `Computer Science';} \\
-        \end{split}
-    \end{equation*}
+    The SQL/PGQ query for this task is shown in Example \ref{example:introduction:sqlpgq}.      
 
     There is one graph query for obtaining triangles of persons that know each other.
     Therefore, the converged logical plan consists of one relational subplan and one graph subplan.
@@ -113,8 +92,7 @@ The above process of query processing is illustrated with the following example.
     \begin{equation*}
         \begin{split}
             R_{graph} = & \pi_{p1.name\rightarrow pn1, p1.dept\_id \rightarrow dept1,p2.name\rightarrow pn2, p2.dept\_id \rightarrow dept2,} \\
-            & _{p3.name\rightarrow pn3, p3.dept\_id \rightarrow dept3}( \\
-            & G_{\triangle}).
+            & _{p3.name\rightarrow pn3, p3.dept\_id \rightarrow dept3}(G_{\triangle}).
         \end{split}
     \end{equation*}
     Finally, to obtain the triangles of persons with at least two persons from the department of computer science, the relational algebra expression is

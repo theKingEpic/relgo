@@ -21,6 +21,106 @@
 \usepackage{multicol}
 \usepackage{multirow}
 
+\definecolor{eclipseBlue}{RGB}{42,0.0,255}
+\definecolor{eclipseGreen}{RGB}{63,127,95}
+\definecolor{eclipsePurple}{RGB}{127,0,85}
+
+\lstdefinelanguage{pgq}
+{
+  % list of keywords
+  morekeywords={
+    NODE,
+    EDGE,
+    TYPE,
+    IMPORTS,
+    OPTIONAL,
+    STRICT,
+    LOOSE,
+    OPEN,
+    CLOSED,
+    ABSTRACT,
+    CREATE,
+    GRAPH,
+    FOR,
+    WITHIN,
+    MATCH,
+    WHERE,
+    NOT,
+    OR,
+    AND,
+    EXISTS,
+    RETURN,
+    IN,
+    IS,
+    NULL,
+    ORDER,
+    BY,
+    INSERT,
+    SET,
+    REMOVE,
+    DROP,
+    DELETE,
+    FINISH,
+    COLUMNS,
+    GRAPH_TABLE,
+    SELECT,
+    DETACH,
+    STRING,
+    VARCHAR,
+    BOOLEAN,
+    BOOL,
+    SIGNED,
+    INTEGER,
+    INT,
+    FLOAT,
+    GRAPH,
+    TYPE,
+    ALTER,
+    ROLLBACK,
+    COMMIT,
+    TRANSACTION,
+    START,
+    SESSION,
+    USE,
+    GROUP,
+    VALUE,
+    COUNT,
+    CALL,
+    ANY,
+    IMPLIES,
+    SCHEMA,
+    AT,
+    AS,
+    FROM,
+    GRAPH\_TABLE
+  },
+  sensitive=false, % keywords are not case-sensitive
+  morecomment=[l]{//}, % l is for line comment
+  morecomment=[s]{/*}{*/}, % s is for start and end delimiter
+  morestring=[b]" % defines that strings are enclosed in double quotes
+}
+
+\lstset{
+  language={pgq},
+  basicstyle=\lst@ifdisplaystyle\fontsize{8.5}{10.2}\fi\ttfamily, % Global Code Style
+  extendedchars=true, % Allows 256 instead of 128 ASCII characters
+  tabsize=2, % number of spaces indented when discovering a tab 
+  columns=fullflexible, % fixed to make all characters equal width (but adds too much whitespace!)
+  keepspaces=true, % does not ignore spaces to fit width, convert tabs to spaces
+  showstringspaces=false, % lets spaces in strings appear as real spaces
+  breaklines=true, % wrap lines if they don't fit
+%  numbers=left, % show line numbers at the left
+%  numberstyle=\tiny\ttfamily, % style of the line numbers
+  commentstyle=\color{eclipseGreen}, % style of comments
+  keywordstyle=\color{eclipsePurple}, % style of keywords
+  stringstyle=\color{eclipseBlue}, % style of strings
+  escapeinside={(*}{*)}, % escape symbols
+  aboveskip=2.5pt,
+  belowskip=1.5pt,
+  morestring=[b]',
+  morestring=[b]",
+}
+
 \newtheorem{definition}{Definition}
 \newtheorem{lemma}{Lemma}
 \newtheorem{theorem}{Theorem}

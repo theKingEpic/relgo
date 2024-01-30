@@ -14,28 +14,24 @@ An example of a SQL/PGQ query is provided in Example \ref{example:introduction:s
 
     Suppose we are going to find three persons satisfying: (1) They know each other; (2) Two of them belong to the Department of Computer Science.
     Then, the corresponding SQL/PGQ query is as follows:
-    \begin{equation}
-        \begin{split}
-            & \text{SELECT person1, person2, person3} \\
-            & \text{FROM Department p, GRAPH\_TABLE (friendship\_graph} \\
-            &            \hspace{2em} \text{MATCH} \\
-            &            \hspace{3em} \text{(p1:Person)-[:Knows]-(p2:Person)-[:Knows]-(p3:Person),} \\
-            &            \hspace{3em} \text{(p1)-[:Knows]-(p3)} \\
-            &            \hspace{2em} \text{\text{COLUMNS} (} \\
-            &                    \hspace{3em} \text{p1.name as person1,} \\
-            &                    \hspace{3em} \text{p1.dept\_id as dept1,} \\            
-            &                    \hspace{3em} \text{p2.name as person2,} \\
-            &                    \hspace{3em} \text{p2.dept\_id as dept2,} \\ 
-            &                    \hspace{3em} \text{p3.name as person3,}  \\
-            &                    \hspace{3em} \text{p3.dept\_id as dept3,}  \\
-            &        \hspace{2em} \text{)} \\
-            & \text{WHERE} \\
-            & \hspace{1em} \text{dept1 = p.dept\_id AND} \\
-            & \hspace{1em} \text{dept2 = p.dept\_id AND} \\
-            & \hspace{1em} \text{p.dept\_name = `\text{Computer Science}';} \\
-        \end{split}
-    \end{equation}
-
+    \begin{lstlisting}
+        SELECT person1, person2, person3
+        FROM Department p, GRAPH_TABLE (friendship_graph
+            MATCH (p1:Person)-[:Knows]-(p2:Person)-[:Knows]-(p3:Person),
+            (p1)-[:Knows]-(p3)
+            COLUMNS (
+                p1.name as pn1,
+                p1.dept_id as dept1,
+                p2.name as pn2,
+                p2.dept_id as dept2,
+                p3.name as pn3,
+                p3.dept_id as dept3
+            )
+        )
+        WHERE dept1 = p.dept_id
+        AND dept2 = p.dept_id AND
+        AND p.dept_name = 'Computer Science';
+    \end{lstlisting}
     According to the first condition, the wanted three persons should form a triangle in \textbf{friendship\_graph}.
     It is a problem of pattern matching, and such triangles are searched for on the graph view.
     The output of the graph query is a table (named f) with three columns, i.e., person1, person2, and person3, representing the identifiers of the three persons, respectively.
@@ -46,7 +42,7 @@ An example of a SQL/PGQ query is provided in Example \ref{example:introduction:s
 
 Query optimization is crucial for query processing.
 The optimizer can significantly influence the efficiency of query processing.
-There are already many works about relational query optimizers, and some works about graph query optimizers.
+There are already many works about relational query optimizers and graph query optimizers.
 However, neither of them are suitable for SQL/PGQ queries.
 Because they can only optimize the queries from the relational perspective or the graph perspective, but not both.
 In this paper, we are going to propose a new converged framework for query optimization of SQL/PGQ statements.
@@ -59,10 +55,51 @@ However, since the relational optimizers only take the relational operators into
 Therefore, the search space is artificially reduced, the best physical plan are likely to be missed.
 An intuitive idea is to replace some relational operators with graph operators after the physical plans are obtained (e.g., replace some join operators with getV/getE/getNeighbor in graph operators) to take advantage of the benefits brought about by graph operators.
 Then, the obtained new plan are probabily not the optimizal plan, and the estimated costs are inaccurate.
+Moreover, some efficient replacement may be impossible w.r.t.~the obtained physical plan due to the order of joining tables representing vertices and edges.
+
+\begin{figure*}
+    \centering
+    \begin{subfigure}[b]{0.4\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/intro-order-case.png}
+        \caption{Relationship 1.}
+        \label{fig:intro-order-case}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.4\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/intro-order-case-2.png}
+        \caption{Relationship 2.}
+        \label{fig:intro-order-case2}
+    \end{subfigure}
+    \caption{Graphs representing the relationships among tuples in different tables. In detail, tuples in Tables \textbf{Contributor} and \textbf{Repository} represent vertices in the graph, while those in Tables \textbf{Follows} and \textbf{Contirbute} represent edges.}
+    \label{fig:intro-replace-example}
+\end{figure*}
+
 
 \begin{example}
-    An example about replace join with getV/getE/getNeighbor,
-    or the example of duckdb, whether to indicate more constraints (due to the unawareness of getNeighbor)
+    Given four tables \textbf{Contributor}, \textbf{Follows}, \textbf{Contribute}, and \textbf{Repository} as shown in Fig.~\ref{fig:intro-order-case}, the relationships among their tuples are presented.
+    Specifically, edge (v1, e1) means that e1.contr\_id = v1.contr\_id and edge (e1, r1) means that e1.repo\_id = r1.repo\_id.
+
+    Given a query as follows:
+    \begin{lstlisting}
+        SELECT p2.contr_id, repo_name
+        FROM Contributor p1, Follows f, Contributor p2, Contribute c, Repository p
+        WHERE p1.contr_id = 1 
+        AND p1.contr_id = f.contr2_id 
+        AND p2.contr_id = f.contr1_id
+        AND p1.contr_id = c.contr_id 
+        AND c.repo_id = r.repo_id;
+    \end{lstlisting}
+    from the perspecitve of a relational database (e.g., DuckDB), the best join order can be \textbf{p1$\rightarrow$f$\rightarrow$p2$\rightarrow$c$\rightarrow$r}, since Tables \textbf{Follows} and \textbf{Contributor} has much smaller cardinalities than Table \textbf{Contribute}.
+    Then, by replacing the join operators with getNeighbor, the finally obtained execution plan is \textbf{p1$\xrightarrow{\textit{getNeighbor}}$p2$\xrightarrow{\textit{getNeighbor}}$r}.
+
+    However, as $v_1$ has much fewer neighbors in Table \textbf{Repository} than in Table \textbf{Contributor}, join order \textbf{p1$\xrightarrow{\textit{getNeighbor}}$r$\xrightarrow{\textit{getNeighbor}}$p2} would be more efficient from the perspective of graph databases.
+    Therefore, it suggests that replacing relational operators with graph operators after optimization with relational optimizers can miss the optimial execution plans.
+
+    Besides, given the relationships among the tuples as shown in Fig.~2a, the best join order from the perspective of a relational database like DuckDB can be \textbf{p1$\rightarrow$f$\rightarrow$c$\rightarrow$p2$\rightarrow$r},
+
+    %An example about replace join with getV/getE/getNeighbor,
+    %or the example of duckdb, whether to indicate more constraints (due to the unawareness of getNeighbor)
 \end{example}
 
 
