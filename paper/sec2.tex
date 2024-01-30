@@ -216,13 +216,11 @@ and $v_1, \cdots, v_n$ are the vertices in $R$ that should connect to vertices i
 The type of the edge between $v_j$ and $p.v$ needs to be one of $\{l_j^1, \cdots l_j^{k_j}\}$.
 
 Given a openCypher query as follows:
-\begin{equation}
-    \begin{split}
-        & \text{MATCH} \text{ } (p1\text{:Person})-[\text{:Likes}]->(m\text{:Message}), \\
-        & \hspace{1em} (p1)-[\text{:Knows}]-(p2\text{:Person})-[\text{:Likes}]->(m\text{:Message}) \\
-        & \text{RETURN } p1.\text{name}
-    \end{split}
-\end{equation}
+\begin{lstlisting}
+    MATCH (p1:Person)-[:Likes]->(m:Message),
+        (p1)-[:Knows]-(p2:Person)-[:Likes]->(m:Message)
+    RETURN p1.name;
+\end{lstlisting}
 With $\updownarrow^{(p2\text{:Person})}_{(p1)}[\text{:Knows}]\bigcirc_{(p1\text{:Person})}$, the partial results w.r.t.~$(p1)-[\text{:Knows}]-(p2)$ are obtained (denoted by $r$). 
 $r$ should be extended to the message $m$ from $p1$ and $p2$ respectively, and then intersection on $m$ is applied.
 Therefore, the extend-intersect operator is used, and the query can be compiled to

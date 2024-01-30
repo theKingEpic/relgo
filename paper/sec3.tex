@@ -172,24 +172,20 @@ One crucial strategy among the possible ones is \filterrule.
 The \filterrule demonstrates a graph-relational optimization that highlights the synergy between graph and relational optimization. 
 Given a SQL/PGQ query, the constraints on a graph element can be specified in the relational or graph parts.
 For instance, 
-\begin{eqnarray*}
-    \begin{split}
-        & F1: \\
-        & \hspace{1em} \text{SELECT p FROM GRAPH\_TABLE (friendship\_graph} \\
-        & \hspace{2em} \text{MATCH (p1:Person)-[:Knows]-(p2:Person \{name = 'John'\})} \\
-        & \hspace{2em} \text{COLUMNS (p1.name as p);}
-    \end{split}
-\end{eqnarray*}
+\begin{lstlisting}
+    F1:
+        SELECT p FROM GRAPH_TABLE (friendship_graph 
+        MATCH (p1:Person)-[:Knows]-(p2:Person {name = 'John'})
+        COLUMNS (p1.name as p));
+\end{lstlisting}
 and 
-\begin{eqnarray*}
-    \begin{split}
-        & F2: \\
-        & \hspace{1em} \text{SELECT p FROM GRAPH\_TABLE (friendship\_graph} \\
-        & \hspace{2em} \text{MATCH (p1:Person)-[:Knows]-(p2:Person)} \\
-        & \hspace{2em} \text{COLUMNS (p1.name as p, p2.name as p2);} \\
-        & \hspace{1em} \text{WHERE p2 = 'John';}
-    \end{split}
-\end{eqnarray*}
+\begin{lstlisting}
+    F2:
+        SELECT p FROM GRAPH_TABLE (friendship_graph 
+        MATCH (p1:Person)-[:Knows]-(p2:Person)
+        COLUMNS (p1.name as p, p2.name as p2))
+        WHERE p2 = 'John';
+\end{lstlisting}
 both find persons that know John.
 Their only difference is that F1 specifies the constraints in the graph query, while F2 specifies the constraints in the relational query.
 It is obvious that F1 is more efficient since persons whose names are not John cannot match p2 in the graph query and the graph query returns fewer results.
