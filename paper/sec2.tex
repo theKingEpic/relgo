@@ -46,9 +46,28 @@ The source operator gets vertices from a graph according to the constraints spec
     Each obtained vertex should contain the specified labels $l_1, \cdots, l_k$.
 \end{definition}
 
+\begin{figure*}
+    \centering
+    \begin{subfigure}[b]{0.4\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/example-graph.png}
+        \caption{Example Graph.}
+        \label{fig:example-graph}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.4\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/intro-order-case-2.png}
+        \caption{Formal Definition of Example Graph.}
+        \label{fig:example-graph-def}
+    \end{subfigure}
+    \caption{Definition of an example graph.}
+    \label{fig:example-graph-full}
+\end{figure*}
+
 \begin{example}
-    // Change to a Image, with the following vertices and edges 
     Suppose property graph $G = (V, E, \lambda, L, T, \mathcal{L}, \mathcal{T}, P_v, P_e)$ represents the relationships among persons.
+    The property graph is shown in Fig.~\ref{fig:example-graph}.
+
     In detail, $V = \{v_1, v_2, v_3, \cdots\}$, $E = \{e_1, e_2, e_3, \cdots\}$, $\lambda = \{e_1 \rightarrow (v_1, v_2), e_2 \rightarrow (v_3, v_1), e_3 \rightarrow (v_3, v_2), \cdots\}$, $\mathcal{L} = \{v_1 \rightarrow \{Person, Student\}, v_2 \rightarrow \{Person, Student\}, v_3 = \rightarrow \{Person, Teacher\}, \cdots\}$, $\mathcal{T} = \{e_1 \rightarrow Friend, e_2 \rightarrow Teaching, e_3 \rightarrow Teaching, \cdots\}$, $p_{v_1}^{\text{name}} = \text{"Alice"}$, $p_{v_1}^{\text{age}} = \text{22}$, $p_{v_2}^{\text{name}} = \text{"Bob"}$, $p_{v_2}^{\text{age}} = \text{24}$, $p_{v_3}^{\text{name}} = \text{"David"}$, $p_{v_3}^{\text{age}} = \text{46}$, $p_{v_3}^{\text{curriculum}} = [\text{"Cryptography"}$, $\text{"Compilers"}$, $\text{"Machine Learning"}]$, $p_{e_1}^{\text{since}} = \text{2015}$. 
 
     Then, to find all the persons with label \text{Student}, the corresponding expressions is:

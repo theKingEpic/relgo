@@ -2,20 +2,41 @@
 
 Relational database has been a research hotspot for a long time, and the related achievements have already been applied in various scenarios such as finance, healthcare, and online services.
 In order to manage data in relational databases conveniently and efficiently, Structured Query Language (abbr.~SQL) is presented.
-Various relational database management systems implement their own version of SQL.
+Various relational database management systems implement their own versions of SQL.
 
-Recently, unstructured data become more common and the relationships between data are given importance.
-Specifically, more graph-related analysis are in demand, such as neighborhood querying, reachability query, and pattern matching.
-Such analysis is important in real-world applications like fraud detection and team formation, and to support such analysis efficiently, traversal on the relationships need to be sipported efficiently.
-Therefore, graph databases emerges, which model data and relationships among them as graphs and build indices to accelerate graph queries.
+Although SQL has achieved tremendous success, there are also some situations where using SQL is quite inconvenient.
+For instance, given two tables \textbf{Person} and \textbf{Knows}, we are going to find all the quadruples of persons where every two persons know each other.
+Then, the SQL expression is 
+\begin{lstlisting}
+    SELECT p1.id, p2.id, p3.id, p4.id
+    FROM Person p1, Person p2, Person p3, Person p4, Knows k1, Knows k2, Knows k3, Knows k4, Knows k5, Knows k6
+    WHERE k1.person1id = p1.id AND k1.person2id = p2.id
+    AND k2.person1id = p1.id AND k2.person2id = p3.id
+    AND k3.person1id = p1.id AND k3.person2id = p4.id
+    AND k4.person1id = p2.id AND k4.person2id = p3.id
+    AND k5.person1id = p2.id AND k5.person2id = p4.id
+    AND k6.person1id = p3.id AND k6.person2id = p4.id;
+\end{lstlisting}
+Such a SQL expression is a bit complex and inconvenient to write.
 
-Since relational databases and graph databases are suitable for different scenarios, an ideal situation would be combine them.
-Then, the primary task is to design a language that can express both relational graph queries.
-The striking SQL/Property Graph Queries (abbr.~SQL/PGQ) perfectly satisfy this requirement.
-In detail, SQL/PGQ is a part of SQL 2023, and it has endowed traditional SQL with the ability to define and query graphs on top of relational databases.
-Then, relational database management systems that implement SQL/PGQ also have the benefits from the graph data model.
+
+Indeed, the conditions specified within this SQL statement collectively establish the structure of a pattern graph.
+In the pattern graph, there are four vertices representing four persons, and these four persons form a complete graph.
+The corresponding expression following the grammar of Cypher is 
+\begin{lstlisting}
+    MATCH (p1:Person)-[:Knows]-(p2:Person)-[:Knows]-(p3:Person)-[:Knows]-(p4:Person),
+        (p1)-[:Knows]-(p3), (p2)-[:Knows]-(p4)
+    RETURN p1.id, p2.id, p3.id, p4.id;
+\end{lstlisting} 
+This graph query expression is much more concise and understandable than that in SQL.
+It suggests that SQL is not always the optimal choice, and sometimes employing graph queries is more advantageous.
+Therefore, it would be helpful for SQL to support both relational queries and graph queries.
+
+Following this idea, the striking SQL/Property Graph Queries (abbr.~SQL/PGQ) is proposed.
+In detail, SQL/PGQ is a part of SQL 2023 and its grammar allows to define and query graphs in SQL/PGQ expressions.
 In SQL/PGQ, graphs are presented as views, and the vertices and edges in the graphs are represented as tables.
-Please note that with SQL/PGQ, graph queries and relational queries can be expressed in one statement and optimized together for a better execution plan.
+Therefore, it has endowed traditional SQL with the ability of graph query languages and some relational queries complex in traditional SQL can be expressed as graph queries.
+It indicates that with SQL/PGQ, graph queries and relational queries can be expressed in one statement and optimized together for a better execution plan.
 
 An example of a SQL/PGQ query is provided in Example \ref{example:introduction:sqlpgq}.
 
@@ -54,32 +75,11 @@ An example of a SQL/PGQ query is provided in Example \ref{example:introduction:s
     Please note that the results of graph queries in SQL/PGQ are still tables, and such returned tables can be exploited in relational queries.
 \end{example}
 
-
-%For a query expression based on SQL/PGQ, its physical plan can contain both relational operators and graph operators.
-
 Given a query following the grammar of SQL/PGQ, query optimization is crucial for query processing, and the performance of the optimizer can significantly influence the efficiency of query processing.
-To deal with such queries with both relational and graph queries, the existing optimizers are far from efficient.
-Specifically, some methods translate graph queries to relational queries (e.g., Apache/Age).
-These methods degrades into relational optimizers, and lose the chance of query optimization from the graph perspective.
-Some other methods build graph indices and replace relational operators with graph operators that have better performance (e.g.~GrainDB).
-In this way, the cost-based optimization only finds the optimal execution plan without being aware of the graph indices.
-Therefore, the plan can be suboptimal after replacement.
-In this paper, we are going to propose a new converged framework for query optimization of SQL/PGQ statements. 
-In this framework, given a SQL/PGQ query, a converged logical plan is first generated.
-Then, the relational subplan and graph subplans are optimized, where the graph indices are taken into consideration in the process of optimization.
+Since relational databases have been widely utilized in both academia and industry, it is impractical to restore the data into new graph databases.
+Thus, it is reasonable to enhance relational databases with the capability to process graph queries.
 
-For implementing such a optimization framework, there are mainly three challenges.
-
-
-%e.g., build a graph view in main-memory (GRFusion, memory cost is large, limited optimization, only some rbo are applied for graph optimizers  or build indices on the adjacent relationships between vertices and edges (GrainDB, only replace hash join with getneighbor, only low-order statistics are used, limited improvement from the graph pserspective) to accelerate graph traversal.
-
-\textbf{Challenge 1. Relational optimizers cannot be used to optimize graph queries directly (or with limited efficiency)}.
-It is true that the vertices and edges in graphs can be represented as corresponding tables in relational databases, and the paths in the graphs can be translated into join operators in relational algebra.
-However, since the relational optimizers only take the relational operators into consideration, some efficient graph operators (e.g., get edge, get vertex, get neighbors with graph indices) are ignored in the process of optimization.
-Therefore, the search space is artificially reduced, the best physical plan are likely to be missed.
-An intuitive idea is to replace some relational operators with graph operators after the physical plans are obtained (e.g., replace some join operators with getV/getE/getNeighbor in graph operators) to take advantage of the benefits brought about by graph operators.
-Then, the obtained new plan are probabily not the optimizal plan, and the estimated costs are inaccurate.
-Moreover, some efficient replacement cannot be applied w.r.t.~the obtained physical plan due to the order of joining tables representing vertices and edges.
+Intuitively, there are many possible methods for optimizing graph queries in relational databases, and they can be mainly categorized into four types of solutions.
 
 \begin{figure*}
     \centering
@@ -99,6 +99,39 @@ Moreover, some efficient replacement cannot be applied w.r.t.~the obtained physi
     \label{fig:intro-replace-example}
 \end{figure*}
 
+\textbf{Solution 1 ($Rel$)}. 
+The most direct solution for relational databases to optimize graph queries is transform the graph queries to relational ones, and then optimize the new queries with relational optimizers.
+Apache/Age is a typical example.
+However, methods of this type degrades into relational optimizers and lose the chance of query optimization from the graph perspecitve.
+
+\begin{example}
+    Given four tables \textbf{Contributor}, \textbf{Follows}, \textbf{Contribute}, and \textbf{Repository} as shown in Fig.~\ref{fig:intro-order-case}, the relationships among their tuples are presented.
+    Specifically, edge (v1, e1) means that e1.contr\_id = v1.contr\_id and edge (e1, r1) means that e1.repo\_id = r1.repo\_id.
+    Moreover, suppose graph indices have been built on Table \textbf{Follows} and \textbf{Contribute}, and a contributor can retrieve the contributors following himself/herself or the repositories he/she contributes to directly with the indices, respectively.
+
+    Then, suppose we are going to find the followers of $v1$, and the query is as follows:
+    \begin{lstlisting}
+        SELECT pid
+        FROM GRAPH_TABLE (graph_view
+            MATCH (p:Person)-[:Follows]->(p2:Person {id: 1})
+            COLUMNS (p1.id as pid)
+        );
+    \end{lstlisting}
+    If the graph query is transformed to the corresponding relational query, then the followers of $v1$ can only be found with joins, and the graph indices cannot be utilized.
+\end{example}
+
+
+\textbf{Solution 2 ($Rel^+$)}.
+Methods of this type build graph indices on relational databases, introduce new operators to perform graph queries based on the indices.
+However, these new operators are applied after the optimial physical plan is obtained with the relational optimizer.
+The optimizer in GrainDB belongs to $Rel^+$.
+GrainDB builds RID indices on DuckDB, and proposes two new join methods, i.e., sip-join and merge-sip-join.
+In detail, sip-join gets adjacent edges of vertices or gets adjacent vertices of edges based on the RID indices, while merge-sip-join obtains the neighbors of vertices.
+Given a query, GrainDB first optimizes it with the relational optimizer of DuckDB, and then replaces some hash-joins with sip-joins and merge-sip-joins to leverage the graph indices.
+In this way, the cost-based optimization only finds the optimal execution plan before the graph indices are awared.
+Therefore, the plan can be suboptimal after replacement.
+Moreover, some efficient replacement cannot be applied w.r.t.~the obtained execution plan due to the order of joining tables representing vertices and edges.
+An example is shown as follows.
 
 \begin{example}
     Given four tables \textbf{Contributor}, \textbf{Follows}, \textbf{Contribute}, and \textbf{Repository} as shown in Fig.~\ref{fig:intro-order-case}, the relationships among their tuples are presented.
@@ -106,19 +139,28 @@ Moreover, some efficient replacement cannot be applied w.r.t.~the obtained physi
 
     Given a query as follows:
     \begin{lstlisting}
-        SELECT p2.contr_id, repo_name
-        FROM Contributor p1, Follows f, Contributor p2, Contribute c, Repository p
-        WHERE p1.contr_id = 1 
-        AND p1.contr_id = f.contr2_id 
-        AND p2.contr_id = f.contr1_id
-        AND p1.contr_id = c.contr_id 
-        AND c.repo_id = r.repo_id;
+        SELECT contr_id, repo_name 
+        FROM GRAPH_TABLE (graph_view
+            MATCH (p2:Contributor)-[:Follows]->(:Contributor {contr_id: 1})-[:Contribute]->(p:Repository)
+            COLUMNS (p2.contr_id as contr_id,
+                    p.repo_name as repo_name)
+        );
     \end{lstlisting}
+    %\begin{lstlisting}
+    %    SELECT p2.contr_id, repo_name
+    %    FROM Contributor p1, Follows f, Contributor p2, Contribute c, Repository p
+    %    WHERE p1.contr_id = 1 
+    %    AND p1.contr_id = f.contr2_id 
+    %    AND p2.contr_id = f.contr1_id
+    %    AND p1.contr_id = c.contr_id 
+    %    AND c.repo_id = r.repo_id;
+    %\end{lstlisting}
     from the perspecitve of a relational database (e.g., DuckDB), the best join order can be \textbf{p1$\rightarrow$f$\rightarrow$p2$\rightarrow$c$\rightarrow$r}, since Tables \textbf{Follows} and \textbf{Contributor} has much smaller cardinalities than Table \textbf{Contribute}.
     Then, by replacing the join operators with getNeighbor, the finally obtained execution plan is \textbf{p1$\xrightarrow{\textit{getNeighbor}}$p2$\xrightarrow{\textit{getNeighbor}}$r}.
 
     However, as $v_1$ has much fewer neighbors in Table \textbf{Repository} than in Table \textbf{Contributor}, join order \textbf{p1$\xrightarrow{\textit{getNeighbor}}$r$\xrightarrow{\textit{getNeighbor}}$p2} would be more efficient from the perspective of graph databases.
-    Therefore, it suggests that replacing relational operators with graph operators after optimization with relational optimizers can miss the optimial execution plans.
+    Therefore, it suggests that 
+    replacing relational operators with graph operators after optimization with relational optimizers can miss the optimial execution plans.
 
     Besides, given the relationships among the tuples as shown in Fig.~2a, the best join order from the perspective of a relational database like DuckDB can be \textbf{p1$\rightarrow$f$\rightarrow$c$\rightarrow$p2$\rightarrow$r}.
     Then, \textbf{p1$\rightarrow$f} and \textbf{c$\rightarrow$p2} cannot be replaced with \textbf{p1$\xrightarrow{\textit{getNeighbor}}$p2} and some efficient execution plans are missing.
@@ -128,69 +170,39 @@ Moreover, some efficient replacement cannot be applied w.r.t.~the obtained physi
 \end{example}
 
 
-\textbf{Challenge 2. Graph optimizers are sometimes difficult to optimize relational queries directly}.
-By considering relational tables as sets of vertices or edges in a graph, some relational queries can be converted to graph queries and optimized with graph optimizers. 
-However, relational queries cannot always be expressed as graph queries with no effort.
-For example, for relational queries with set operators (e.g., UNION, INTERSECT, or EXCEPT), it can be not straightforward to transaform them to graph queries and the obtained graph queries may be inefficient.
-For another example, it is also challenging and may be inefficient to convert a relation query with subqueries to a graph query.
-Moreover, GLogue is the state-of-the-art graph optimizer, and when the tables in a relational query do not forumalte a connected graph, GLogue has limited performance.
+\textbf{Solution 3 ($Rel+G$)}.
+According to the grammar of SQL/PGQ, the graph queries usually starts with keyword GRAPH\_TABLE.
+Therefore, it is not difficult to distinguish graph queries from SQL/PGQ queries.
+Then, it is possible to first optimize the graph queries with graph optimizers, and then optimize the relational query.
+Since the outputs of graph queries are relational tables in SQL/PGQ, they can be considered as tables in the process of optimization with relational optimizers.
+However, this method still has limitations, i.e., graph queries and relational queries are optimized separately, and cross-queries optimizations are missing.
+An example about this is shown as follows.
 
-To make matters worse, translating the optimized plan back into a relational query is also very difficult.
-Furthermore, the optimality of the plan may be compromised during the conversion process.
-Therefore, graph optimizers are not suitable for optimizing relational queries.
-
-A more concrete example is as follows:
 \begin{example}
-    Given a relational query as follows:
+    Suppose we are going to find persons that know John and the query expression is
     \begin{lstlisting}
-        SELECT p1.name, p2.name, p3.name 
-        FROM Person p1, Person p2, Person p3
-        WHERE p1.birthday = p2.birthday
-        AND p2.birthday = p3.birthday;
+        SELECT p FROM GRAPH_TABLE (friendship_graph 
+        MATCH (p1:Person)-[:Knows]-(p2:Person)
+        COLUMNS (p1.name as p, p2.name as p2))
+        WHERE p2 = 'John';
     \end{lstlisting}
-    This query aims to find three persons having the same birthday and only Table \textbf{Person} is involved.
-    The corresponding graph query is as follows:
+    For $Rel+G$ methods, the graph query is first optimized with a graph optimizer, and the optimized plan finds all pairs of persons that know each other.
+    Then, the relational optimizer optimize the relational query, which finds the persons that know John.
+    Please note that the condition ``p2 = John'' in the relational query can be pushed down into the graph query, so that the graph query only returns persons know John.
+    The optimized query is as follows.
     \begin{lstlisting}
-        MATCH (p1:Person), (p2:Person), (p3:Person)
-        WHERE p1.birthday = p2.birthday
-        AND p2.birthday = p3.birthday;
+        SELECT p FROM GRAPH_TABLE (friendship_graph 
+        MATCH (p1:Person)-[:Knows]-(p2:Person {name = 'John'})
+        COLUMNS (p1.name as p));
     \end{lstlisting}
-    The graph query follows the grammar of Cypher.
-    Since the graph query only consists of three isolated vertices, high-order statistics in GLogue is not utilized and the performance of GLogue is limited.
-
-    For another example, suppose the emails of the attendees of SIGMOD 2024 and ICDE 2024 are stored in tables Att\_SIGMOD and Att\_ICDE, respectively.
-    Then, the following relational query finds the common attendees of these two conferences according to persons' emails:
-    \begin{lstlisting}
-        SELECT email
-        FROM Att_SIGMOD
-        INTERSECT
-        SELECT email
-        FROM Att_ICDE;
-    \end{lstlisting}
-    The graph query following the grammar of Cypher with the same meaning might be:
-    \begin{lstlisting}
-        MATCH (a:Attendee)-[:ATTENDING]->(:Conference {name: 'SIGMOD 2024'})
-        WITH a
-        MATCH (a)-[:ATTENDING]->(:Conference {name: 'ICDE 2024'})
-        RETURN a.email;
-    \end{lstlisting}
-    When the graph is highly connected, such a graph query can be less efficient than performing set operations on indexed tables in a relational database.
+    However, since $Rel+G$ optimizes relational queries and graph queries separately and do not have cross-queries optimizations, the condition cannot be pushed down and the optimial execution cannot be obtained.
 \end{example}
-Moreover, relational query optimization has undergone numerous years of research and has accumulated a significant body of research findings.
-Therefore, it would be unwise to abandon relational query optimization in favor of direct graph query optimization.
 
-
-\textbf{Challenge 3. How to ensure worst-case-optimal joins (WCOJs)}.
-Graph queries can be much more complex than relational queries, and multiple joins are common in graph queries.
-Then, it is necessary to support WCOJs in the optimizer, which can reduce the complexity of 
-
-
-In this paper, we propose a new converged optimization framework for SQL/PGQ.
-It can optimize SQL/PGQ statements for query.
-Specifically, the framework first optimize the graph queries in the statement and generate the corresponding graph physical plans.
-[Since there may be join operators in the graph physical plans, the plan can be considered to be connected with join operators.
-Then, the plan is combined with the left relational queries, the new query is optimized again with the relational optimizer.]
-
+Therefore, we propose Solution 4 ($Rel\&G$), which optimizes the graph queries and relational queries simultaneously with cross-queries optimizations.
+Such a method can fully leverage the advantages of both relational optimizers and graph optimizers.
+In detail, we propose a new converged optimization framework for SQL/PGQ in this paper.
+Specifically, the framework first generates the converged logical plan consisting of a relational subplan and several graph subplans.
+Then, optimization strategies including CBO and RBO are applied to optimize inside and crossing subplans.
 The contributions of this paper is mainly as follows:
 
 (1) To the best of our knowledge, this is the first optimization framework for SQL/PGQ.
