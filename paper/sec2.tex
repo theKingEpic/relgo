@@ -31,6 +31,7 @@ To clarify ambiguity, the term ``attribute'' always refers to the attribute of a
 
 
 \subsection{Graph Relational Algebra}
+\label{sec:graph-relational-algebra}
 
 In this paper, we extend the graph relational algebra for openCypher proposed in \cite{}.
 The graph relational algebra utilizes graph relations as its outputs, and consists of operators for graph relations, such as selection ($\sigma$), projection ($\pi$), natural join ($\Join$), left-outer join ($\leftouterjoin$), get-vertices ($\bigcirc$), expand ($\updownarrow^{(w:L)}_{(v)}[e](r)$), and unwind ($\omega$).
@@ -56,7 +57,7 @@ The source operator gets vertices from a graph according to the constraints spec
     \end{subfigure}
     \begin{subfigure}[b]{0.4\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{./figures/intro-order-case-2.png}
+        \includegraphics[width=\linewidth]{./figures/example-graph.png}
         \caption{Formal Definition of Example Graph.}
         \label{fig:example-graph-def}
     \end{subfigure}
@@ -67,10 +68,7 @@ The source operator gets vertices from a graph according to the constraints spec
 \begin{example}
     Suppose property graph $G = (V, E, \lambda, L, T, \mathcal{L}, \mathcal{T}, P_v, P_e)$ represents the relationships among persons.
     The property graph is shown in Fig.~\ref{fig:example-graph}.
-
-    In detail, $V = \{v_1, v_2, v_3, \cdots\}$, $E = \{e_1, e_2, e_3, \cdots\}$, $\lambda = \{e_1 \rightarrow (v_1, v_2), e_2 \rightarrow (v_3, v_1), e_3 \rightarrow (v_3, v_2), \cdots\}$, $\mathcal{L} = \{v_1 \rightarrow \{Person, Student\}, v_2 \rightarrow \{Person, Student\}, v_3 = \rightarrow \{Person, Teacher\}, \cdots\}$, $\mathcal{T} = \{e_1 \rightarrow Friend, e_2 \rightarrow Teaching, e_3 \rightarrow Teaching, \cdots\}$, $p_{v_1}^{\text{name}} = \text{"Alice"}$, $p_{v_1}^{\text{age}} = \text{22}$, $p_{v_2}^{\text{name}} = \text{"Bob"}$, $p_{v_2}^{\text{age}} = \text{24}$, $p_{v_3}^{\text{name}} = \text{"David"}$, $p_{v_3}^{\text{age}} = \text{46}$, $p_{v_3}^{\text{curriculum}} = [\text{"Cryptography"}$, $\text{"Compilers"}$, $\text{"Machine Learning"}]$, $p_{e_1}^{\text{since}} = \text{2015}$. 
-
-    Then, to find all the persons with label \text{Student}, the corresponding expressions is:
+    Then, to find all the persons with label \text{Student}, the corresponding expression is:
     \begin{equation*}
         \bigcirc_{(v_1\text{:Person})}.
     \end{equation*}
@@ -256,3 +254,87 @@ References to vertices or edges should not be returned by graph queries.
 Therefore, the outputs of the graph relational algebra are projected and flattened with the project and unwind operator, respectively.
 Then, the output graph relation is converted to a relation over a relational schema, and can be involved in the following optimization of relational optimizer.
 
+\subsection{Equivalence Between Graph Pattern Matching and Graph Relational Operators}
+
+Given a SQL/PGQ query like 
+\begin{lstlisting}
+    SELECT * 
+    FROM GRAPH_TABLE (graph_view
+        MATCH <Pattern>
+        COLUMNS (
+            ...
+        )
+    );
+\end{lstlisting}
+the graph query part is expressed with the corresponding graph relational algebra expression with operators such as source, expand, join, and extend-intersect operators, and the logical plan can be generated.
+However, the equivalence between the graph relational algebra expression and the graph query is not obvious.
+Since the logical plan is finally transformed to a physical plan, which is executed with relational databases, the graph operators for pattern matching such as expand and extend-intersect are indeed implemented with joins.
+Therefore, it is necessary to prove that the graph query is the same as its corresponding graph relational algebra expression.
+
+Specifically, <Pattern> specified in the graph query is a list of path patterns, and for each path pattern, a path mode can be given.
+In SQL/PGQ, the path mode can be WALK (by default), TRAIL, ACYCLIC, or SIMPLE.
+Under the WALK mode, vertices and edges can repeated in the returned results.
+Under the TRAIL and ACYCLIC mode, results with repeated edges and vertices are not returned respectively.
+Under the SIMPLE mode, results with repeated vertices are not returned, unless these repeated vertices are the first and last vertices in the path (i.e., the path forms a circle).
+
+We start from the case that there is only one path pattern specified in the <Pattern> part, and firstly, we focus on the WALK path mode.
+In this mode, paths homomorphic to the path pattern are returned as the results.
+Then, we have the following theorem.
+
+\begin{theorem}
+    Matching a path pattern in WALK mode have the same meanings as the corresponding graph relational algebra expression. 
+\end{theorem}
+\begin{proof}
+    The graph relational algebra operators related to pattern matching in SQL/PGQ include source, expand, join, and extend-intersect operators.
+    Then, we prove the theorem by induction.
+    Let each vertex and edge in a path pattern be an element.
+    If for each edge in a pattern, its adjacent vertices are also in the pattern, then the pattern is called a strict pattern $P$.
+    Otherwise, it is a loose pattern $\hat{P}$.
+
+    Since path patterns specified in SQL/PGQ are all strict patterns, the induction is conducted on the numnber of elements in the strict pattern.
+    When there is only one element (i.e., a vertex like ``(u:Label)'') in the pattern, the corresponding algebra expression of the pattern is $\bigcirc_{(u:\text{Label})}$, and it is clear that the expression equals the pattern.
+
+    Then, suppose for a path pattern with at most $n$ elements, the corresponding algebra expressions have the same meaning as matching the path pattern.
+    Denote a graph relational algebra with the same meaning as matching path pattern $P$ by $E_p$.
+    
+    When there are $n + 1$ elements in the path pattern $P$:
+    
+    %Condition 1: $P = P_1, P_2$, i.e., pattern $P$ is obtained by concatenating subpatterns $P_1$ and $P_2$.
+    %(e.g., $P_1 = (u)-[e]-(v), P_2 = (u)-[e']-(w), P = (u)-[e]-(v), (u)-[e']-(w)$).
+    %Then, $E_{p_1} \Join E_{p_2}$ equals $P$, since join operator implemented in relational databases follows the semantics of homomorphism.
+
+
+    Condition 1: $P = P_1 - \hat{P}_2$.
+    Without loss of generality, suppose vertex $v$ in $P_1$ is adjacent to an edge in $P_2$.
+    (e.g., $P_1 = (u)-[e]-(v), P_2 = [e']-(w), P = (u)-[e]-(v)-[e']-(w)$).
+    Then, let $P_3 = (v)-\hat{P}_2$, and the corrsponding algebra expression of $P$ can be $E_{p_1} \Join E_{p_3}$.
+    $E_{p_1} \Join E_{p_3}$ equals $P$, since join operator implemented in relational databases follows the semantics of homomorphism.
+    Moreover, if $\hat{P}_2$ only consists of one vertex and an edge adjacent to it (i.e., $\hat{P}_2 = [e:eLabel]-(v_t:vLabel)$).
+    Then, the corresponding algebra expression of $P$ can also be $\updownarrow_{(v)}^{(v_t:vLabel)}[e:eLabel]E_{p_1}$.
+    The expand operator is also implemented by joining relational tables, which follows the semantics of homomorphism.
+
+    Condition 2: $P = P_1$ extends $v$ through edges $e_1:eLabel1, \cdots e_k:eLabelk$ ($k \geq 1$), i.e., at least one vertex in $P_1$ connects to vertex $v$.
+    Then, the corresponding algebra expression of $P$ is 
+    \begin{equation*}
+        E_{p_1} \Diamond_{v_1, \cdots, v_k}^{eLabel1, \cdots, eLabelk} \bigcirc_{(v:vLabel)}.
+    \end{equation*}
+    Since the extend-intersect operator is implemented with relational joins and follows the semantics of homomorphism, the algebra expression has the same meaning as matching the path pattern.
+
+    In conclusion, the corresponding algebra expressions of path pattern $P$ with $n + 1$ elements have the same meaning as matching the path pattern.
+
+    In conclusion, in the WALK mode, matching path patterns has the same meaning as the corresponding graph relational algebra expressions.
+\end{proof}
+
+
+Besides the WALK mode by default, when the path patterns are in TRAIL, ACYCLIC, or SIMPLE mode, we still have the same conclusions.
+Specifically, in TRAIL, ACYCLIC, or SIMPLE mode, a selection operator needs to be added to remove the results with repeated edges or vertices.
+In detail, the selection operator should wrap the corresponding algebra expression of path patterns in the WALK mode.
+For example, in the TRAIL mode, the corresponding graph relational algebra expression of $P = P_1 - P_2$ is $\sigma_{c}(E_{p_1} \Join E_{p_2})$ or $\sigma_{c}(\updownarrow_{(v)}^{(v_t:vLabel)}[e:eLabel]E_{p_1})$, where $c$ is the condition specifying that every two different pattern edges bind to different edges in each result.
+In the ACYCLIC and SIMPLE mode, condition $c$ should be specified according to the constraints of the mode.
+
+Furthermore, there may be more than one path patterns specified in the <Pattern> part of SQL/PGQ queries, and the different path patterns may have different path modes.
+Denote the path patterns by $P_1, \cdots, P_k$.
+According to SQL/PGQ, the binding results of different path patterns are joined together.
+If the match mode in SQL/PGQ is set to \textbf{REPEATABLE ELEMENTS}, there is no more constraint, and ``MATCH $P_1, \cdots, P_k$'' has the same meaning as $P_1 \Join \cdots \Join P_k$, both of which have the semantics of homomorphism.
+Otherwise, if the match mode in SQL/PGQ is set to \textbf{DIFFERENT EDGES}, the same edge cannot bind to different variables in different path patterns.
+Therefore, a selection operator is needed, and ``MATCH $P_1, \cdots, P_k$'' has the same meaning as $\sigma_{d}(P_1 \Join \cdot \Join P_k)$, where $d$ is the condition specifying that each edge cannot bind to more than one variables across all path patterns.
