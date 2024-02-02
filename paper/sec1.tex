@@ -178,6 +178,7 @@ However, this method still has limitations, i.e., graph queries and relational q
 An example about this is shown as follows.
 
 \begin{example}
+    \label{example:push_down}
     Suppose we are going to find persons that know John and the query expression is
     \begin{lstlisting}
         SELECT p FROM GRAPH_TABLE (friendship_graph 
@@ -187,7 +188,7 @@ An example about this is shown as follows.
     \end{lstlisting}
     For $Rel+G$ methods, the graph query is first optimized with a graph optimizer, and the optimized plan finds all pairs of persons that know each other.
     Then, the relational optimizer optimize the relational query, which finds the persons that know John.
-    Please note that the condition ``p2 = John'' in the relational query can be pushed down into the graph query, so that the graph query only returns persons know John.
+    Please note that the condition ``p2 = 'John''' in the relational query can be pushed down into the graph query, so that the graph query only returns persons know John.
     The optimized query is as follows.
     \begin{lstlisting}
         SELECT p FROM GRAPH_TABLE (friendship_graph 

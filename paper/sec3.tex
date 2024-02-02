@@ -1,11 +1,48 @@
-\section{Converged Graph Relational Optimizer}
+\section{Converged Graph Relational Optimization Framework}
+
+In this section, we first introduce the sketch of the converged graph relational optimizer.
+Then, Section \ref{sec:framework:combination} presents the workflow of the framework, and Section \ref{sec:framework:detailed-optimizations} explains the optimization strategies applied in the framework in detail.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{./figures/framework.png}
+    \caption{Overview of the Converged Graph Relational Optimization Framwork.}
+    \label{fig:framework-overview}
+\end{figure}
 
 \subsection{Overview of the Framework}
 
-A system overview figure and some introduction
+% A system overview figure and some introduction
+The framework consists of three layers as shown in Fig.~\ref{fig:framework-overview}, i.e., indexing layer, optimization layer, and output layer.
+In this subsection, the details of these three layers are introduced in detail.
 
+\textbf{Indexing Layer.} The indexing layer mainly builds graph indices for the graph optimization module with IndexBuilder.
+For the graph queries specified in the SQL/PGQ query, the obtained graph plans are likely to contain the commonly used graph operators (e.g., \textit{GetVertex}, \textit{GetEdge}, and \textit{GetNeighbor}).
+However, traditional relational databases cannot support such operators efficiently.
+Therefore, graph indices need to be constructed so that vertices can efficiently access its adjacent edges and neighboring vertices, and edges can also quickly obtain their adjacent vertices.
+Then, in the process of optimizing the graph subplans, the cost of graph operators like \textit{GetNeighbor} should be that of obtaining neighbors of vertices in relational databases with graph indices.
+
+\textbf{Optimization Layer.} The optimization layer consists of three modules, i.e., the relational optimization module, graph optimization module, and crossing optimization module.
+In detail, the relational optimization module optimizes relational queries with relational optimization strategies.
+It should contain rule-based optimizations (abbr.~RBOs) and cost-based optimizations (abbr.~CBOs), and can be any one of the commonly used relational optimizers (e.g., Calcite or the optimizer of Duckdb).
+The graph optimization module optimizes graph queries and also has specific RBOs and CBOs for graphs queries.
+It can be any existing graph optimizer (e.g., GLogue).
+Besides, the crossing optimization module optimizes the relational queries and graph queries simultaneously.
+Optimizations are achieved through interaction and transformation between relational and graph queries.
+
+\textbf{Output Layer.} The output layer converts the execution plan obtained in the optimization layer to the plan that can be executed by the target database.
+To ensure the flexibility of the framework, codegen technology is utilized to implement the PlanConverter.
+In detail, the PlanConverter first converts the obtained execution plan into the predefined internal representation, and then the internal representation is transformed into a physical plan that the target database can parse and execute.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{./figures/workflow.png}
+    \caption{Workflow of the Converged Graph Relational Optimization Framework.}
+    \label{fig:workflow}
+\end{figure}
 
 \subsection{Leveraging Benefits of Both Relational and Graph Optimizations}
+\label{sec:framework:combination}
 
 \begin{figure*}
     \centering
@@ -44,25 +81,28 @@ A system overview figure and some introduction
 \end{figure*}
 
 
-Given a query that follows the grammar of SQL/PGQ, it is first parsed and a converged logical plan is generated.
+Fig.~\ref{fig:workflow} illustrates the workflow for optimizing a query that adheres to the SQL/PGQ grammar using the converged graph relational optimization framework.
+In detail, the query is first parsed and a converged logical plan is generated.
 The converged logical plan consists of several graph subplans and a relational subplan.
-Eacn graph subplan corresponds to a graph query, and it is optimized with graph optimizers.
+Eacn graph subplan corresponds to a graph query, and it is optimized with the graph optimization module.
 Since parts of the graph query are always marked with ``GRAPH\_TABLE (name, MATCH $\cdots$)'', it is straightforward to distinguish graph queries from relational queries, and the graph subplans can be generated easily.
 For each graph subplan, an operator ``GetGraphTable(name)'' is generated and added to the relational subplan.
-Specifically, from the perspective of relational optimizers, the ``GetGraphTable'' operator is simply an operator for retrieving data like ``GetTable'' and it returns table data.
-Please note that in a SQL/PGQ query, a graph query can be utilized as a subquery to retrieve the table involved in the relational query.
-However, a relational query cannot serve as a subquery within a graph query because the mapping between tables and vertices/edges need to be specified beforehand.
+Specifically, from the perspective of the relational optimization module, the ``GetGraphTable'' operator is simply an operator for retrieving data like ``GetTable'' and it returns table data.
+Please note that since the outputs of graph queries need to be relational tables as defined in SQL/PGQ, a graph query can be utilized as a subquery to retrieve the table involved in the relational query.
+However, a relational query cannot serve as a subquery within a graph query because the mappings between relational tables and vertices/edges need to be specified beforehand, and the graph indices should be built in advance.
 
 
-With the generated converged logical plan, the converged optimizer takes effect and obtains the optimal physical plan by applying different optimization strategies.
-The strategies are of two types, i.e., rule-based optimizations (abbr.~RBO) and cost-based optimizations (abbr.~CBO).
-In our converged graph relational optimizer, strategies for relational queries and graph queries are utilized for the relational subplan and graph subplans, respectively.
-Moreover, there are also some optimization strategies that intersect and interact throughout the graph and relational query optimization processes.
-These strategies will be detailed in Section \ref{sec:detailed-optimizations}.
+With the generated converged logical plan, the converged optimizer takes effect and obtains the optimal physical plan with the modules in the optimization layer.
+Specifically, the crossing optimization module first takes effects, e.g., pushing filtering conditions from the relational subquery to graph subqueries.
+Then, the graph subqueries are optimized with the graph optimization module.
+During the process of optimizing the graph subqueries, the cardinalities of the outputs of the graph subqueries are also estimated.
+Next, the relational optimization module is utilized to optimize the relational query, where some source tables may be the outputs of graph subqueries.
+After that, it is tested whether the crossing optimization module can further optimize the plan.
+If the plan can still be optimized, then the three modules are applied again to optimize the plan.
+Otherwise, the optimal execution plan is obtained.
 
-After the optimal physical plan is obtained, it is fed to the executor to get the query results.
-Although different databases can have different operators and different requirements for physical plans, the physical plan for one database can be converted to that for another database by exploiting Codegen.
-Specifically, the original physical plan is firstly converted to an internal representation (e.g., substrait), and then the internal representation is transformed to the physical plan of the target database.
+After the optimal physical plan is obtained, the PlanConverter transforms the plan to an internal representation (e.g., substrait), and then the internal representation is transformed to the physical plan that can be executed by the target database.
+Finally, the plan is executed and the query results are obtained.
 The above process of query processing is illustrated with the following example.
 
 \begin{example}
@@ -107,28 +147,28 @@ The above process of query processing is illustrated with the following example.
 
     Based on the above algebra expressions, the corresponding converged logical plan is shown, and its relational and graph subplans are presented in Fig.~\ref{fig:converged-logical-plan-relational} and Fig.~\ref{fig:converged-logical-plan-graph}, repsectively.
     
-    Then, optimization strategies are applied to optimize the relational subplan and graph subplans.
+    Then, optimization modules in the optimization layer are applied to optimize the relational subplan and graph subplans.
     The optimized converged logical plan is shown in Fig.~\ref{fig:relational-plan-optimized} and Fig.~\ref{fig:graph-plan-optimized}.
     Moreover, the finally obtained optimal physical plan is shown in Fig.~\ref{fig:physical-plan-optimized}.
 \end{example}
 
 \subsection{Detailed Optimizations}
-\label{sec:detailed-optimizations}
+\label{sec:framework:detailed-optimizations}
 
-In this subsection, we first present the optimization strategies for the relational subplan and graph subplans, respectively.
-Then, the strategy interacts relational subplan and graph subplans are proposed.
+In this subsection, we first present the optimization strategies utilized in the relational optimization module and graph optimization module, respectively.
+Then, the strategies of crossing optimization module are also proposed.
 
-\subsubsection{Optimization Strategies for Relational Subplans}
+\subsubsection{Optimization Strategies in Relational Optimization Module}
 
-Like most relational optimizers, we have applied both Rule-based Optimization (abbr.~RBO) and Cost-based Optimization (abbr.~CBO) strategies on relational subplans for a better physical plan.
+Like most relational optimizers, the relational optimization module applies both Rule-based Optimization (abbr.~RBO) and Cost-based Optimization (abbr.~CBO) strategies on relational subplans for a better physical plan.
 In detail, in terms of RBO, commonly used optimizations such as filter pushdown, join order optimization, and removal of unused columns are employed in the converged optimizer.
-In terms of CBO, the costs of plans are estimated based on the low-order statistics such as the cardinality of tables and query conditions.
+In terms of CBO, the costs of plans are estimated based on the low-order statistics such as the cardinalities of tables and query conditions.
 
 
 
-\subsubsection{Optimization Strategies for Graph Subplans}
+\subsubsection{Optimization Strategies in Graph Optimization Module}
 
-We have formulated a specific rule set to capitalize on optimization potential among graph operators. 
+In the graph optimization module, we formulate a specific rule set to capitalize on optimization potential among graph operators. 
 Both RBO and CBO strategies are included in the rule set.
 
 In terms of RBO strategies, two frequently utilized key rules, i.e., \trimrule and \fusionrule, are presented in this subsection.
@@ -139,6 +179,12 @@ Two particular instances where trimming helps include:
 Firstly, \trimrule~ can eliminate intermediate results with aliases that are not required and reduce computations.
 Secondly, it involves discarding unneeded vertex and edge properties when retrieving from the data graph. 
 This is accomplished by specifying essential properties in the graph operators’ \code{COLUMNS} field.
+Formally, an example of applying \trimrule is as follows:
+\begin{equation}
+    \mathcal{S}_g \Rightarrow \pi_{u.a_1, \cdots, u.a_k}\mathcal{S} _g 
+\end{equation}
+where $\mathcal{P}_g$ is a graph relational algebra expression corresponding to a graph subplan, and $u.a_1, \cdots, u.a_k$ are necessary properties.
+
 
 \fusionrule. 
 The \fusionrule~ is a graph-centric rule. 
@@ -147,6 +193,14 @@ The \fusionrule~ consolidates these operators into one integrated \expandvertex~
 Nonetheless, whether \expandedge~ and \getvertex~ can be merged is context-dependent. 
 For example, if some properties of the edges are needed, fusion might not be feasible.
 This rule evaluates such factors to ensure query optimization without compromising result integrity.
+%Formally, an example of applying \fusionrule is as follows:
+%\begin{equation}
+%    \begin{split}
+%    &  \\
+%    & \hspace*{2em} \Rightarrow \pi_{u.a_1, \cdots, u.a_k}\updownarrow_{(u)}^{(v:vLabel)}[:eLabel](\sigma_{d(u)}\bigcirc_{(u:uLabel)}), \\
+%    \end{split}
+%\end{equation}
+%where $d(u)$ is a filtering constraint on vertex $u$.
 
 
 In terms of CBO, drawing from insignts gained in the prior research, we implement effective pattern matching by incorporating hybrid pattern join strategies and leveraging high-order statistics, which provide a more granular understanding of the data through the frequency of smaller patterns.
@@ -162,36 +216,40 @@ Regarding cost and cardinality estimation, we adopt a cost model that considers 
 Specifically, costs for the binary join and extend-intersect operators in graphs are defined. 
 Additionally, we estimate the operator cost using an expand ratio that reflects the change in pattern occurrences when edges are expanded.
 
-\subsubsection{Interacting Strategies}
+\subsubsection{Optimization Strategies in Crossing Optimization Module}
 
-Please note that the optimization of graph subplans and the relational subplan are not isolated or entirely unconnected.
+Please note that the optimizations of graph subplans and the relational subplan are not isolated or entirely unconnected.
 For example, when \trimrule~ is applied on graph subplans, it is necessary to judge whether the properties of vertices and edges are utilized in graph subplans and relational subplans.
-Besides, more interacting optimization strategies can be designed for optimizing the graph and relational subplans simultaneously.
-One crucial strategy among the possible ones is \filterrule. 
+Actually, more crossing optimization strategies can be designed for optimizing the graph and relational subplans simultaneously.
+Such optimizations are included in the crossing optimization module, and two typical and crucial strategies of them are \filterrule and \intersectrule. 
 
 \filterrule. 
-The \filterrule demonstrates a graph-relational optimization that highlights the synergy between graph and relational optimization. 
-Given a SQL/PGQ query, the constraints on a graph element can be specified in the relational or graph parts.
-For instance, 
-\begin{lstlisting}
-    F1:
-        SELECT p FROM GRAPH_TABLE (friendship_graph 
-        MATCH (p1:Person)-[:Knows]-(p2:Person {name = 'John'})
-        COLUMNS (p1.name as p));
-\end{lstlisting}
-and 
-\begin{lstlisting}
-    F2:
-        SELECT p FROM GRAPH_TABLE (friendship_graph 
-        MATCH (p1:Person)-[:Knows]-(p2:Person)
-        COLUMNS (p1.name as p, p2.name as p2))
-        WHERE p2 = 'John';
-\end{lstlisting}
-both find persons that know John.
-Their only difference is that F1 specifies the constraints in the graph query, while F2 specifies the constraints in the relational query.
-It is obvious that F1 is more efficient since persons whose names are not John cannot match p2 in the graph query and the graph query returns fewer results.
-Therefore, it is necessary to push down filtering conditions in SQL/PGQ queries.
-Specifically, the \filterrule aims to introduce such filters at the pattern matching phase. 
-It seeks to push filtering conditions on properties of graph elements from the relaitonal subplan to graph subplans.
-Moreover, \filterrule attemps to embed filtering conditions into basic graph operators like \scan~, \expandedge~, or \getvertex to further push down filtering conditions in graph queries. 
+The \filterrule seeks to push filtering conditions on properties of graph elements from the relational subplan to graph subplans, so that invalid graph elements can be dropped earlier.
+An example of applying \filterrule is given in Example \ref{example:push_down}.
+
+Specifically, \filterrule can embed filtering conditions into basic graph operators like \scan~, \expandedge~, or \getvertex~ to further push down filtering conditions in graph queries. 
 This integration allows the direct exclusion of vertices and edges not satisfying the filter conditions, thus drastically cutting down the volume of intermediary outcomes.
+
+Formally, the equation rule w.r.t.~\filterrule is as follows:
+\begin{equation}
+    \begin{split}
+    & \sigma_{\theta}\pi_{v.a_1, \cdots, v.a_k}(lr~\alpha_{(u)}^{(v)}[e]~er) \\
+    & \hspace*{2em} \equiv \pi_{v.a_1, \cdots, v.a_k}(lr~\sigma_{\theta}(\alpha_{(u)}^{(v:vLabel)}[e]~er)), \\
+    \end{split}
+\end{equation}
+where $lr$ and $er$ are graph relational algebra expressions, $\alpha \in \{\uparrow, \downarrow, \updownarrow\}$, and vLabel is specified if the label of $v$ is specified in $\theta$.
+
+
+\intersectrule. 
+Please note that the intersection operator is not defined in graph queries, but it can be expressed with expand operators.
+Given a SQL/PGQ query, if the two subqueries that intersect are both graph queries, then the paths in these two graph queries can be combined with expand operators to generate new paths.
+That is, two graph queries combined with an intersection operator is converted to a new graph query.
+By leveraging graph indices, it can be more efficient to obtain the intersection results w.r.t.~the new graph query.
+The rule is as follows.
+\begin{equation}
+    \begin{split}
+        & \pi_{u.a_1, \cdots, u.a_k}(el~\alpha_{(u)}^{v:vlabel}[e]~er) \\
+        & \hspace*{2em} \equiv \pi_{u.a_1, \cdots, u.a_k}(el) \cap \pi_{u.a_1, \cdots, u.a_k}(\alpha_{(u)}^{v:vlabel}[e]~er),
+    \end{split}
+\end{equation}
+where $el$ and $er$ are graph relational algebra expressions, $\alpha \in \{\uparrow, \downarrow, \updownarrow\}$.
