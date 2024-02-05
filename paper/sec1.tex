@@ -78,7 +78,8 @@ Given a query following the grammar of SQL/PGQ, query optimization is crucial fo
 Since relational databases have been widely utilized in both academia and industry, it is costly and impractical to migrate data from relational databases to graph databases.
 Thus, it is reasonable to enhance relational databases with the capability to process graph queries.
 
-Intuitively, there are many possible methods for optimizing graph queries in relational databases, and they can be mainly categorized into four types of solutions.
+Intuitively, there are many possible methods for optimizing graph queries in relational databases.
+These methods can be mainly categorized into four types of solutions.
 
 \begin{figure*}
     \centering
@@ -101,7 +102,9 @@ Intuitively, there are many possible methods for optimizing graph queries in rel
 \textbf{Solution 1 ($Rel$)}. 
 The most direct solution for relational databases to optimize graph queries is to transform graph queries to relational ones, and then optimize the new queries with relational optimizers.
 Apache/Age is a typical example.
-However, methods of this type degrade into relational optimizers and lose the chance of query optimization from the graph perspecitve.
+However, such methods 
+
+methods of this type degrade into relational optimizers and lose the chance of query optimization from the graph perspecitve.
 
 \begin{example}
     Given four tables \textbf{Contributor}, \textbf{Follows}, \textbf{Contribute}, and \textbf{Repository} as shown in Fig.~\ref{fig:intro-order-case}, the relationships among their tuples are presented.
