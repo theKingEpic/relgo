@@ -208,23 +208,24 @@ The framework first generates the converged logical plan consisting of a relatio
 Then, optimization strategies including CBO and RBO are applied to optimize inside and crossing subplans.
 The contributions of this paper are mainly as follows:
 
-(1) To the best of our knowledge, this is the first optimization framework for SQL/PGQ.
+(1) To the best of our knowledge, this is the first optimization framework for SQL/PGQ query optimization.
 Property graphs are represented as views in SQL/PGQ, and vertices and edges are associated with tables in the relational databases.
 Then, it is crucial to offer the converged query optimizer efficient for both relational and graph queries.
 
-(2) The framework is the first to [unify] the inputs and outputs of the graph optimizer and relational optimizer based on the graph relational algebra, and propose the converted graph relational optimizer for SQL/PGQ queries.
-In detail, given a SQL/PGQ query, it is first parsed and a converged logical plan is obtained.
-This plan consists of one relational subplan and several graph subplans.
-The optimizer first optimizes the graph subplans and relational subplan with graph, relational and interacting optimization strategies.
+(2) The framework proposes a new Scan operator named ScanGraphTable to retrieve data from graph tables obtained with graph queries.
+The output of ScanGraphTable is a relational table and it bridges the gap between graph logcal plans and relational logical plans.
+
+(3) We prove that graph pattern matching expressed in graph queries of SQL/PGQ can be expressed with graph relational algebra, which confirms that the converged graph relational optimization framework can optimize SQL/PGQ queries and obtain correct results.
+
 
 % In the framework, we design and implement numerous important operators for graph optimizer, including getV, getE, getNeighbor, and extendIntersect.
 % Specifically, the extendIntersect operator is helpful in supporting worst-case optimality.
 
-(3) Theoretical analysis on the complexity of the optimization framework is conducted.
+(4) Theoretical analysis on the complexity of the optimization framework is conducted.
 The obtained theorems prove that for graph queries, the join order optimization with a graph optimizer can be exponentially faster than that with a relational optimizer. 
 It theoretically confirms that relational optimizer is usually not suitable for graph queries, and it is indispensable for the existence of a converged optimization framework.
 
-(4) Extensive experiments are conducted to show the efficiency of the proposed converged query optimization framework.
+(5) Extensive experiments are conducted to show the efficiency of the proposed converged query optimization framework.
 The experimental results show that the framework can be ?$\times$ faster than the baselines.
 
 The rest of this paper is organized as follows.
