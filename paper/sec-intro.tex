@@ -130,7 +130,7 @@ Therefore, they lose the chance of query optimization from the graph perspecitve
     \begin{lstlisting}
         SELECT pid
         FROM GRAPH_TABLE (graph_view
-            MATCH (p:Person)-[:Follows]->(p2:Person {id: 1})
+            MATCH (p1:Contributor)-[:Follows]->(p2:Contributor {id: 1})
             COLUMNS (p1.id as pid)
         );
     \end{lstlisting}
@@ -182,7 +182,7 @@ An example is shown as follows.
     Therefore, it suggests that 
     replacing relational operators with graph operators after optimization with relational optimizers can miss optimial execution plans.
 
-    Besides, given the relationships among the tuples as shown in Fig.~2a, the best join order from the perspective of a relational database like DuckDB can be \textbf{p1$\rightarrow$f$\rightarrow$c$\rightarrow$p2$\rightarrow$r}.
+    Besides, given the relationships among the tuples as shown in Fig.~\ref{fig:intro-order-case2}, the best join order from the perspective of a relational database like DuckDB can be \textbf{p1$\rightarrow$f$\rightarrow$c$\rightarrow$p2$\rightarrow$r}.
     Then, \textbf{p1$\rightarrow$f} and \textbf{c$\rightarrow$p2} cannot be replaced with \textbf{p1$\xrightarrow{\textit{getNeighbor}}$p2} and some efficient execution plans are missing.
 
     %An example about replace join with getV/getE/getNeighbor,
@@ -203,8 +203,9 @@ An example about this limitation is presented.
     Suppose we are going to find persons that know John and the query expression is as follows:
     \begin{lstlisting}
         SELECT p FROM GRAPH_TABLE (friendship_graph 
-        MATCH (p1:Person)-[:Knows]-(p2:Person)
-        COLUMNS (p1.name as p, p2.name as p2))
+            MATCH (p1:Person)-[:Knows]-(p2:Person)
+            COLUMNS (p1.name as p, p2.name as p2)
+        )
         WHERE p2 = 'John';
     \end{lstlisting}
     For $Rel+G$ methods, the graph query is first optimized with a graph optimizer, and the optimized plan finds all pairs of persons that know each other.
@@ -213,8 +214,9 @@ An example about this limitation is presented.
     The optimized query is as follows.
     \begin{lstlisting}
         SELECT p FROM GRAPH_TABLE (friendship_graph 
-        MATCH (p1:Person)-[:Knows]-(p2:Person {name = 'John'})
-        COLUMNS (p1.name as p));
+            MATCH (p1:Person)-[:Knows]-(p2:Person {name = 'John'})
+            COLUMNS (p1.name as p)
+        );
     \end{lstlisting}
     However, since $Rel+G$ methods optimize relational queries and graph queries separately and do not apply cross-queries optimizations, the condition cannot be pushed down and the optimal execution plan is missed.
 \end{example}
