@@ -34,17 +34,46 @@ where $lr$ and $er$ are graph relational algebra expressions, $\alpha \in \{\upa
 \intersectrule. 
 Please note that the intersection operator is not defined in graph queries, but it can be expressed with expand operators.
 Given a SQL/PGQ query, if the two subqueries that intersect are both graph queries, then the paths in these two graph queries can be combined with expand operators to generate new paths.
-That is, two graph queries combined with an intersection operator is converted to a new graph query.
+That is, two graph queries combined with an intersection operator are converted to a new graph query.
 By leveraging graph indices, it can be more efficient to obtain the intersection results w.r.t.~the new graph query.
 To some extent, one of the graph queries can be considered as the predicates, and then \intersectrule is somehow pushing down predicates to the other graph query.
 The rule is as follows.
 \begin{equation}
     \begin{split}
-        & \pi_{u.a_1, \cdots, u.a_k}(el~\alpha_{(u)}^{v:vlabel}[e]~er) \\
-        & \hspace*{2em} \equiv \pi_{u.a_1, \cdots, u.a_k}(el) \cap \pi_{u.a_1, \cdots, u.a_k}(\alpha_{(u)}^{v:vlabel}[e]~er),
+        & \pi_{v.a_1, \cdots, v.a_k}(el~\alpha_{(u)}^{(v:vlabel)}[e]~er) \\
+        & \hspace*{2em} \equiv \pi_{v.a_1, \cdots, v.a_k}(el) \cap \pi_{v.a_1, \cdots, v.a_k}(\alpha_{(u)}^{(v:vlabel)}[e]~er),
     \end{split}
 \end{equation}
 where $el$ and $er$ are graph relational algebra expressions, $\alpha \in \{\uparrow, \downarrow, \updownarrow\}$.
+
+\begin{example}
+    Suppose we are going to find persons that know both Alice and Bob, the corresponding relational query is as follows:
+    \begin{lstlisting}
+        (
+            SELECT p2.name
+            FROM Person p1, Knows k1, Person p2
+            WHERE k1.sid = p1.id
+                AND k1.tid = p2.id
+                AND p1.name = 'Alice'
+        )
+        INTERSECT
+        (
+            SELECT p2.name
+            FROM Person p2, Knows k2, Person p3;
+            WHERE k2.sid = p2.id
+                AND k2.tid = p3.id
+                AND p3.name = 'Bob';
+        )
+    \end{lstlisting}
+    Then, based on the \intersectrule, the query can be transformed to the corresponding graph query as follow:
+    \begin{lstlisting}
+        SELECT name 
+        FROM GRAPH_TABLE (know_graph
+            MATCH (p1:Person {name: 'Alice'})-[k1:Knows]->(p2:Person)<-[k2:Knows]-(p3:Person {name: 'Bob'})
+            COLUMNS (p2.name as name);
+        );
+    \end{lstlisting}
+\end{example}
 
 
 

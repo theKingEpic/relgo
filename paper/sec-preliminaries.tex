@@ -165,9 +165,9 @@ The aggregation operator is denoted by $\gamma_{c_1, \cdots, c_i}^{o_1, \cdots, 
 Specifically, the records are grouped according to attributes $c_1, \cdots, c_i \in V \cup E \cup D$, and $o_1, \cdots, o_j$ are the outputed new attributes.
 
 \begin{example}
-    To count the number of students teached by David, the following expression can be used:
+    To count the number of students taught by David, the following expression can be used:
     \begin{equation*}
-        \downarrow_{(v_1)}^{(v_s:Student)}[\text{:Teaching}]\sigma_{v_1\text{.name=``David''}}(\bigcirc_{(v_1:Person)})
+        \gamma_{}^{count(v_s)}\uparrow_{(v_1)}^{(v_s:Student)}[\text{:Teaching}]\sigma_{v_1\text{.name=``David''}}(\bigcirc_{(v_1:Person)})
     \end{equation*}
 \end{example}
 
@@ -300,4 +300,4 @@ Denote the path patterns by $P_1, \cdots, P_k$.
 According to SQL/PGQ, the binding results of different path patterns are joined together.
 If the match mode in SQL/PGQ is set to \textbf{REPEATABLE ELEMENTS}, there is no more constraint, and ``MATCH $P_1, \cdots, P_k$'' has the same meaning as $P_1 \Join \cdots \Join P_k$, both of which have the semantics of homomorphism.
 Otherwise, if the match mode in SQL/PGQ is set to \textbf{DIFFERENT EDGES}, the same edge cannot bind to different variables in different path patterns.
-Therefore, a selection operator is needed, and ``MATCH $P_1, \cdots, P_k$'' has the same meaning as $\sigma_{d}(P_1 \Join \cdot \Join P_k)$, where $d$ is the condition specifying that each edge cannot bind to more than one variables across all path patterns.
+Therefore, a selection operator is needed, and ``MATCH $P_1, \cdots, P_k$'' has the same meaning as $\sigma_{d}(P_1 \Join \cdots \Join P_k)$, where $d$ is the condition specifying that each edge cannot bind to more than one variables across all path patterns.

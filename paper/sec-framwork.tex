@@ -15,7 +15,7 @@ In such a SQL/PGQ query, it is straightforward to distinguish graph queries from
 For each graph query, a graph logical plan is generated.
 The operators that can be utilized in graph logical plans are those defined in graph relational algebra (introduced in Sec.~\ref{sec:preliminaries}).
 Pleanse note that the output of a graph logical plan is a relational table.
-Therefore, the graph logical plan can be considered to guide the process of retrieving data from a graph table, and the plan as a whole is a new physical implementation of the Scan operator, which is called ScanGraphTable.
+Therefore, the graph logical plan can be considered to guide the process of retrieving data from a graph table, and the plan as a whole is a new implementation of the Scan operator, which is called ScanGraphTable.
 The semantic of the ScanGraphTable operator is scanning a graph table obtained with graph queries.
 Then, for the outer relational query, by representing graph queries with ScanGraphTable operators, the relational logical plan can be optimized by most relational optimizers such as Calcite.
 Therefore, rich optimization strategies for relational databases can be applied.
