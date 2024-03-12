@@ -5,15 +5,15 @@ Sec.~\ref{sec:experiment-e2e}-Sec.~\ref{sec:experiment-case-study} conduct the e
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{c|c|c}
+    \begin{tabular}{c|c|c|c}
     \hline
-    Dataset & |V| & |E| \\ 
+    Dataset & |V| & |E| & Disk Space Usage\\ 
     \hline
-    $G_{sf10}$& Row 1, Col 2 & Row 1, Col 3 \\
+    $G_{sf10}$& 29,987,835 & 88,317,856 & 8.9G \\
     \hline
-    $G_{sf30}$ & Row 2, Col 2 & Row 2, Col 3 \\
+    $G_{sf30}$ & 88,789,833 & 278,652,443 & 28.0G\\
     \hline
-    $IMDB$ & & \\
+    $IMDB$ & 14,431,946 & 59,758,241 & 3.7G \\
     \hline
     \end{tabular}
     \caption{Statistics of the datasets. In detail, $|\cdot|$ represents the number of elements in $\cdot$.}
@@ -36,7 +36,8 @@ The obtained modified benchmark is denoted by SNB-M and queries performed on $G_
 The other benchmark is Join Order Benchmark (JOB) on Internet Movie Database (abbr.~IMDB).
 Specifically, IMDB is a dataset mainly about the relationships among movies, persons, and movie companies.
 JOB focuses on the problem of join order optimization, and queries in JOB have an average of 8 joins.
-The details of the datasets are summarized in Table
+The details of the datasets are summarized in Table \ref{table:experiment-datasets}, where |V| and |E| represent the number of vertices and edges in the datasets, respectively.
+For IMDB, its tables are regarded as vertices or edges first, and then the number of vertices and edges are counted.
 
 \textbf{Baselines. }
 In the experiments, two optimizers of type $Rel$ and $Rel^+$ respectively are utilized as the baselines.
@@ -122,5 +123,72 @@ Besides, the optimization time cost of relgo is similar on $G_{sf10}$ and $G_{sf
 The reason is that the time required for optimization is not significantly associated with the scale of the dataset; instead, it is related to the relative cardinalities among the different tables.
 The relative cardinalities in LDBC datasets of different scales are consistent, therefore the optimization time is similar.
 
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{.3\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/pattern-triangle.png}
+        \caption{Triangle}
+        \label{fig:exp-hard-triangle}
+    \end{subfigure}
+    \begin{subfigure}[b]{.3\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/pattern-butterfly.png}
+        \caption{Butterfly}
+        \label{fig:exp-hard-butterfly}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/pattern-clique.png}
+        \caption{4-Clique}
+        \label{fig:exp-hard-clique}
+    \end{subfigure}
+    \caption{Patterns searched for in case studies.}
+    \label{fig:exp-hard-patterns}
+\end{figure}
+
 \subsection{Case Study}
 \label{sec:experiment-case-study}
+
+In this section, to highlight the strengths our converged optimizer, i.e., relgo, we design three SQL/PGQ queries to find the patterns shown in Fig.~\ref{fig:exp-hard-patterns} on $G_{sf10}$ and $G_{sf30}$.
+Take finding 4-cliques as an example, the corresponding SQL/PGQ query is as follows:
+\begin{lstlisting}
+    SELECT pn1, pn2, pn3, pn4 
+    FROM GRAPH_TABLE (knows_grpah
+        MATCH (p1:Person)-[:Knows]->(p2:Person)-[:Knows]->(p3:Person)-[:Knows]->(p4:Person),
+            (p4)-[:Knows]->(p1)-[:Knows]->(p3),
+            (p2)-[:Knows]->(p4)
+        COLUMNS (
+            p1.id as pn1, p2.id as pn2, 
+            p3.id as pn3, p4.id as pn4
+        )
+    );
+\end{lstlisting}
+With these three queries, the efficiency of the physical plans obtained by relgo and those obtained by GrainDB are compared.
+The experimental results are shown in Fig.~\ref{fig:exp-hard}.
+
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/hard_sf10.png}
+        \caption{Time Cost on $G_{sf10}$.}
+        \label{fig:exp-hard-sf10}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/hard_sf30.png}
+        \caption{Time Cost on $G_{sf30}$.}
+        \label{fig:exp-hard-sf30}
+    \end{subfigure}
+    \caption{Experiments on the time cost of finding patterns in Fig.~\ref{fig:exp-hard-patterns} on $G_{sf10}$ and $G_{sf30}$.}
+    \label{fig:exp-hard}
+\end{figure}
+
+The experimental results indicate the superiority of relgo compared with GrainDB.
+In detail, the physical plans obtained by relgo are always much better than those obtained by GrainDB.
+Under the best conditions, i.e., the 4-clique pattern queried on $G_{sf30}$, the execution time of the plan optimized with relgo can be more than an order of magnitude shorter than that of GrainDB.
+Such a significant improvement comes from relgo's more accurate estimation of cost, and a better plan can be generated.
+Besides, \expandintersectrule can be utilized in the plan generated with relgo, and it is much more efficient than performing multiple joins [as illustrated in Sec.~\ref{sec:experiment-ablation}].
+
