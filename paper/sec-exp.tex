@@ -3,7 +3,7 @@ The experiental results are presented and analyzed in this section.
 In detail, experimental settings are introduced in Sec.~\ref{sec:experiment-settings}.
 Sec.~\ref{sec:experiment-e2e}-Sec.~\ref{sec:experiment-case-study} conduct the experiments.
 
-\begin{table}[h]
+\begin{table}[t]
     \centering
     \begin{tabular}{c|c|c|c}
     \hline
@@ -53,77 +53,51 @@ For simplicity, in the rest of this paper, when there is no ambiguity, the optim
 
 Our experiments are carried out on a server with Intel Xeon E5-2682 2.50GHz CPU and 251GB RAM.
 
+\begin{figure*}[ht]
+    \centering
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/e2e_sf10.pdf}
+        \caption{Time Cost on $G_{sf10}$.}
+        \label{fig:exp-e2e-sf10}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/e2e_sf30.pdf}
+        \caption{Time Cost on $G_{sf30}$.}
+        \label{fig:exp-e2e-sf30}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.6\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/e2e_job.pdf}
+        \caption{Time Cost on IMDB.}
+        \label{fig:exp-e2e-job}
+    \end{subfigure}
+    \caption{Results of the end-to-end experiments.}
+    \label{fig:exp-e2e}
+\end{figure*}
+
 \subsection{End-to-End Experiments}
 \label{sec:experiment-e2e}
 
-on LDBC SNB sf-10, sf-30
-on IMDB Job
+End-to-end experiments are conducted on SNB-M and JOB benchmarks to compare the performances of execution plans obtained by DuckDB, GrainDB, and relgo.
+For experments on the LDBC benchmark, each IC query is executed for 50 times with different times, and the average time cost is reported.
+The exeprimental results are shown in Fig.~\ref{fig:exp-e2e}.
 
-\subsection{Queries with Circles}
-\label{sec:experiment-circle}
-
-1. Source - ExpandE - ExpandV (sip) v.s. Source - ExpandV (mergesip)
-
-2. intersect v.s. join twice
-
-
-\subsection{Ablation Study}
-\label{sec:experiment-ablation}
-
-remove graph index (i.e., duckdb)
-remove extend-intersect
+The results demonstrate that the execution plans obtained with relgo are always better than those obtained with GrainDB and DuckDB.
+For example, when query 1a is queried on the IMDB dataset, executing the plan from relgo is about 6$\times$ and 10$\times$ faster than executing the plans from GrainDB and DuckDB, respectively.
+There are mainly two reasons for the superiority of relgo.
+Firstly, relgo is aware of the existence of graph indices in graph query optimization.
+Thus, the cost estimation of rego is more accurate and better physical plans can be obtained.
+In contrast, the optimizers of DuckDB and GrainDB are of the types $Rel$ and $Rel^+$, respectively, and are not aware of the graph indices in query optimization.
+Therefore, the accuracy of cost estimation is limited.
+Secondly, for queries with cycles (e.g., IC7-1 on SNB-M), relgo can replace multiple joins with extend-intersection.
+Such an operator can significantly reduce the time consumption, which is demonstrated through experiments in Sec.~\ref{sec:experiment-circle}.
+Thirdly, relgo is more adept at identifying opportunities to effectively utilize graph indices to get neighbors of vertices, since it optimizes graph queries from the graph perspective.
+Conversely, GrainDB occasionally partitions the process into separate stages, first retrieving adjacent edges and subsequently obtaining the corresponding endpoints.
 
 
-\subsection{Detailed Evaluation}
-\label{sec:experiment-detail}
-
-time cost of index building
-compilation
-query execution
-
-\subsection{Optimization Efficiency Evaluation}
-\label{sec:experiment-optimize}
-
-In this subsection, experiments are conducted to compare the optimization time cost of relgo and Apache Calcite, which is a well-known data management framework widely used in various projects such as Hive and Kylin.
-Please note that the codes of relgo and Calcite are both written in Java.
-In detail, we test the optimization time of relgo and Calcite on SNB-M and JOB benchmarks, and VolcanoPlanner of Calcite with default rules is leveraged.
-If optimization for a query is not finished in 10 minutes, the process is early stopped and the time cost of such optimization is recorded as 10 minutes.
-The results are shown in Fig.~\ref{fig:exp-optimization}.
-
-\begin{figure*}
-    \centering
-    \begin{subfigure}[b]{0.3\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{./figures/exp/optimization_sf10.png}
-        \caption{Optimization Time Cost on $G_{sf10}$.}
-        \label{fig:exp-optimization-sf10}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.3\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{./figures/exp/optimization_sf30.png}
-        \caption{Optimization Time Cost on $G_{sf30}$.}
-        \label{fig:exp-optimization-sf30}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.3\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{./figures/exp/optimization_job.png}
-        \caption{Optimization Time Cost on JOB.}
-        \label{fig:exp-optimization-job}
-    \end{subfigure}
-    \caption{Experiments on the time cost of optimization.}
-    \label{fig:exp-optimization}
-\end{figure*}
-
-In the experiments, optimizing all the queries with relgo can be finished in 10 minutes, while optimizing some queries with Calcite exceeds the 10-minute limit.
-For example, when JOB benchmark is utilized, the time cost of optimizing all the queries with Calcite is longer than 10 minutes.
-As shown in Fig.~\ref{fig:exp-optimization}, relgo is much more efficient than Calcite in optimizing queries, and it is consistent with the conclusions obtained in Sec.~\ref{sec:theoretical-analysis}.
-For instance, when IC5-1 is queried on $G_{sf30}$, the time cost of query optimization with relgo can be more than $10^4\times$ faster than that of Calcite.
-
-Besides, the optimization time cost of relgo is similar on $G_{sf10}$ and $G_{sf30}$, and so is Calcite.
-The reason is that the time required for optimization is not significantly associated with the scale of the dataset; instead, it is related to the relative cardinalities among the different tables.
-The relative cardinalities in LDBC datasets of different scales are consistent, therefore the optimization time is similar.
-
-\begin{figure}
+\begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{.3\linewidth}
         \centering
@@ -147,8 +121,8 @@ The relative cardinalities in LDBC datasets of different scales are consistent, 
     \label{fig:exp-hard-patterns}
 \end{figure}
 
-\subsection{Case Study}
-\label{sec:experiment-case-study}
+\subsection{Queries with Circles}
+\label{sec:experiment-circle}
 
 In this section, to highlight the strengths our converged optimizer, i.e., relgo, we design three SQL/PGQ queries to find the patterns shown in Fig.~\ref{fig:exp-hard-patterns} on $G_{sf10}$ and $G_{sf30}$.
 Take finding 4-cliques as an example, the corresponding SQL/PGQ query is as follows:
@@ -168,17 +142,17 @@ With these three queries, the efficiency of the physical plans obtained by relgo
 The experimental results are shown in Fig.~\ref{fig:exp-hard}.
 
 
-\begin{figure}
+\begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{.45\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{./figures/exp/hard_sf10.png}
+        \includegraphics[width=\linewidth]{./figures/exp/hard_sf10.pdf}
         \caption{Time Cost on $G_{sf10}$.}
         \label{fig:exp-hard-sf10}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{./figures/exp/hard_sf30.png}
+        \includegraphics[width=\linewidth]{./figures/exp/hard_sf30.pdf}
         \caption{Time Cost on $G_{sf30}$.}
         \label{fig:exp-hard-sf30}
     \end{subfigure}
@@ -191,4 +165,108 @@ In detail, the physical plans obtained by relgo are always much better than thos
 Under the best conditions, i.e., the 4-clique pattern queried on $G_{sf30}$, the execution time of the plan optimized with relgo can be more than an order of magnitude shorter than that of GrainDB.
 Such a significant improvement comes from relgo's more accurate estimation of cost, and a better plan can be generated.
 Besides, \expandintersectrule can be utilized in the plan generated with relgo, and it is much more efficient than performing multiple joins [as illustrated in Sec.~\ref{sec:experiment-ablation}].
+
+
+
+\subsection{Ablation Study}
+\label{sec:experiment-ablation}
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/ablation_ei_sf10.pdf}
+        \caption{Time Cost on $G_{sf10}$.}
+        \label{fig:exp-ablation-ei-sf10}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/ablation_ei_sf10.pdf}
+        \caption{Time Cost on $G_{sf30}$.}
+        \label{fig:exp-ablation-ei-sf30}
+    \end{subfigure}
+    \caption{Abaltion study on \expandintersectrule. Please note that executing plans obtained with "Relgo w.o. EI" to find bufferflies and 4-cliques triggers an ``Out of Memory'' (abbr.~OOM) error.}
+    \label{fig:exp-ablation-ei}
+\end{figure}
+
+In this section, we conduct ablation study to show the efficiency of \expandintersectrule.
+In detail, patterns in Fig.~\ref{fig:exp-hard-patterns} are queried on $G_{sf10}$ and $G_{sf30}$, and plans are optimized with Relgo.
+For each plan optimized by Relgo, we replace the extend-intersect operators in it with multiple join operators and obtain a new plan.
+These new plans are called obtained with \textit{"Relgo w.o. EI"}.
+The experimental results are shown in Fig.~\ref{fig:exp-ablation-ei}.
+
+The results illustrate the efficiency of \expandintersectrule.
+When triangles are searched for, removing the extend-intersect operators decreases the query performance.
+Besides, when butterflies and 4-cliques are searched for, the plans without extend-intersect operators have an excessive memory overhead and cause an ``Out of Memory'' (abbr.~OOM) error.
+The reason is that applying extend-intersect operators has much fewer intermediate results than applying multiple joins, since numerous results that will not appear in the intersection are prematurely deleted.
+It indicates that \expandintersectrule can not only enhance query performance, but also reduce spatial overhead.
+
+To further demonstrates the efficiency of using \expandintersectrule, we add predicates on butterflies (i.e., Fig.~\ref{fig:exp-hard-butterfly}) and 4-cliques (i.e., Fig.~\ref{fig:exp-hard-clique}) to avoid OOM.
+Specifically, for these two patterns, the values of properties Person1.\textit{p\_personid} are constrained to be smaller than specified values.
+The results on the constrained-patterns are shown in Fig.~\ref{}.
+
+
+The results suggest that \expandintersectrule is crucial in optimizing queries with cycles.
+Specifically, for all the three patterns with cycles, the execution time of plans optimized by relgo is shorter than those optimized by \textit{"Relgo w.o. EI"}.
+It indicates the effectiveness of \expandintersectrule.
+Moreover, when patterns with many cycles are used (e.g., 4-clique in Fig.~\ref{fig:exp-hard-clique}), the optimization effect of the rule becomes particularly noticeable.
+In detail, querying for 4-cliques with relgo can be 100$\times$ faster than with \textit{"Relgo w.o. EI"}.
+The results illustrate the efficiency of \expandintersectrule.
+
+
+\subsection{Detailed Evaluation}
+\label{sec:experiment-detail}
+
+time cost of index building
+compilation
+query execution
+
+\subsection{Optimization Efficiency Evaluation}
+\label{sec:experiment-optimize}
+
+In this subsection, experiments are conducted to compare the optimization time cost of relgo and Apache Calcite, which is a well-known data management framework widely used in various projects such as Hive and Kylin.
+Please note that the codes of relgo and Calcite are both written in Java.
+In detail, we test the optimization time of relgo and Calcite on SNB-M and JOB benchmarks, and VolcanoPlanner of Calcite with default rules is leveraged.
+If optimization for a query is not finished in 10 minutes, the process is early stopped and the time cost of such optimization is recorded as 10 minutes.
+The results are shown in Fig.~\ref{fig:exp-optimization}.
+
+\begin{figure*}[ht]
+    \centering
+    \begin{subfigure}[b]{0.3\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/optimization_sf10.pdf}
+        \caption{Optimization Time Cost on $G_{sf10}$.}
+        \label{fig:exp-optimization-sf10}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/optimization_sf30.pdf}
+        \caption{Optimization Time Cost on $G_{sf30}$.}
+        \label{fig:exp-optimization-sf30}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{./figures/exp/optimization_job.pdf}
+        \caption{Optimization Time Cost on IMDB.}
+        \label{fig:exp-optimization-job}
+    \end{subfigure}
+    \caption{Experiments on the time cost of optimization.}
+    \label{fig:exp-optimization}
+\end{figure*}
+
+In the experiments, optimizing all the queries with relgo can be finished in 10 minutes, while optimizing some queries with Calcite exceeds the 10-minute limit.
+For example, when JOB benchmark is utilized, the time cost of optimizing all the queries with Calcite is longer than 10 minutes.
+As shown in Fig.~\ref{fig:exp-optimization}, relgo is much more efficient than Calcite in optimizing queries, and it is consistent with the conclusions obtained in Sec.~\ref{sec:theoretical-analysis}.
+That is, relgo is exponentially faster than Calcite in query optimization.
+For instance, when IC5-1 is queried on $G_{sf30}$, the time cost of query optimization with relgo can be more than $10^4\times$ faster than that of Calcite.
+
+Besides, the optimization time cost of relgo is similar on $G_{sf10}$ and $G_{sf30}$, and so is Calcite.
+The reason is that the time required for optimization is not significantly associated with the scale of the dataset; instead, it is related to the relative cardinalities among the different tables.
+The relative cardinalities in LDBC datasets of different scales are consistent, therefore the optimization time is similar.
+
+
+
+\subsection{Case Study}
+\label{sec:experiment-case-study}
+
 
