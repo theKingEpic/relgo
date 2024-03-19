@@ -214,7 +214,7 @@ An example about this limitation is presented.
     The optimized query is as follows.
     \begin{lstlisting}
         SELECT p FROM GRAPH_TABLE (friendship_graph 
-            MATCH (p1:Person)-[:Knows]-(p2:Person {name = 'John'})
+            MATCH (p1:Person)-[:Knows]-(p2:Person {name: 'John'})
             COLUMNS (p1.name as p)
         );
     \end{lstlisting}
