@@ -1,0 +1,9 @@
+[submodule "relgo-duckdb/extension-ci-tools"]
+	path = relgo-duckdb/extension-ci-tools
+	url = https://github.com/duckdb/extension-ci-tools.git
+[submodule "relgo-duckdb/duckdb"]
+	path = relgo-duckdb/duckdb
+	url = https://github.com/duckdb/duckdb.git
+[submodule "relgo-duckdb/relgo/third_party/yaml-cpp"]
+	path = relgo-duckdb/relgo/third_party/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
