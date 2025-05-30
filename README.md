@@ -76,7 +76,8 @@ cd relgo-duckdb
 ## Step 3: Apply Patch to DuckDB
 ```
 cd duckdb
-git apply ../patch/0001-graph_shell.patch
+git apply ../patch/0001-graph_shell_linux.patch // for linux
+git apply ../patch/0001-graph_shell.patch   // for others
 ```
 
 ## Step 4: Compile the Code
