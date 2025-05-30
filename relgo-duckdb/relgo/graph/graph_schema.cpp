@@ -184,14 +184,14 @@ nlohmann::json GraphSchema::generateStatistics() {
   graph_statistic["total_vertex_count"] = total_vertex;
   graph_statistic["total_edge_count"] = total_edge;
 
-  // std::ofstream file("../../resource/tmp/modern_statistics.json");
-  // file << graph_statistic.dump(4);
-  // file.close();
+  std::ofstream file("../../resource/tmp/modern_statistics.json");
+  file << graph_statistic.dump(4);
+  file.close();
 
-  nlohmann::json read_from_file;
-  std::fstream file("../../resource/tmp/modern_statistics.json");
-  file >> read_from_file;
-  return read_from_file;
+  // nlohmann::json read_from_file;
+  // std::fstream file("../../resource/tmp/modern_statistics.json");
+  // file >> read_from_file;
+  // return read_from_file;
 
   return graph_statistic;
 }

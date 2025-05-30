@@ -471,7 +471,6 @@ void SIPHashTable::GenerateBitmaskFilter(
     relgo::PushDownStatistics &rai_stat, bool use_alist) {
   // initialize bitmask filters
   auto zone_size = (rai_info.left_cardinalities[0] / STANDARD_VECTOR_SIZE) + 1;
-  std::cout << "the zone size is: " << zone_size << std::endl;
   rai_stat.row_bitmask =
       make_uniq<relgo::bitmask_vector>(zone_size * STANDARD_VECTOR_SIZE);
   rai_stat.zone_bitmask = make_uniq<relgo::bitmask_vector>(zone_size);
