@@ -1,20 +1,24 @@
 name: Compile LaTeX to PDF
-on: 
-  workflow_dispatch:  # 仅手动触发
+on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Compile LaTeX
-        uses: xu-cheng/latex-action@v3
+      - uses: actions/checkout@v4
+
+      - name: Debug file structure  # 调试用
+        run: ls -R paper/
+
+      - uses: xu-cheng/latex-action@v3
         with:
-          root_file: paper/main.tex  # 修改为你的主.tex文件路径
-          latexmk_use_xelatex: true  # 使用XeLaTeX（推荐中文支持）
-          # latexmk_use_lualatex: true  # 或使用LuaLaTeX
-      - name: Upload PDF artifact
-        uses: actions/upload-artifact@v4
+          root_file: paper/main.tex
+          latexmk_use_xelatex: true
+          # latexmk_shell_escape: true  # 如需BibTeX或外部命令则启用
+
+      - name: Verify PDF  # 确保PDF生成
+        run: test -f paper/main.pdf || exit 1
+
+      - uses: actions/upload-artifact@v4
         with:
           name: output-pdf
-          path: paper/*.pdf  # 上传生成的PDF
+          path: paper/main.pdf  # 直接指定文件名更可靠
