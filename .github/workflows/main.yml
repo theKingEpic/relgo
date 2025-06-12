@@ -8,7 +8,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Compile LaTeX
-        uses: xu-cheng/latex-action@v3
+        uses: xu-cheng/latex-action@v4
         with:
           root_file: paper/main.tex  # 修改为你的主.tex文件路径
           latexmk_use_xelatex: true  # 使用XeLaTeX（推荐中文支持）
