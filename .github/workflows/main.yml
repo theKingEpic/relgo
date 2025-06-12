@@ -17,4 +17,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: output-pdf
-          path: tex/*.pdf  # 上传生成的PDF
+          path: paper/*.pdf  # 上传生成的PDF
