@@ -14,7 +14,7 @@ jobs:
           latexmk_use_xelatex: true  # 使用XeLaTeX（推荐中文支持）
           # latexmk_use_lualatex: true  # 或使用LuaLaTeX
       - name: Upload PDF artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: output-pdf
           path: paper/*.pdf  # 上传生成的PDF
